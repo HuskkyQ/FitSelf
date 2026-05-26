@@ -6,10 +6,23 @@ final class WorkoutViewModel {
     var activeWorkout: Workout?
     var exercises: [WorkoutExercise] = []
     var recentWorkouts: [Workout] = []
+    var workoutCategory: String = "strength"
 
     var isWorkoutActive: Bool { activeWorkout != nil }
     var totalDuration: Int { activeWorkout?.duration ?? 0 }
     var totalCalories: Double { activeWorkout?.caloriesBurned ?? 0 }
+
+    var workoutCategoryDisplayName: String {
+        switch workoutCategory {
+        case "strength": return "力量训练"
+        case "cardio": return "有氧运动"
+        case "flexibility": return "柔韧拉伸"
+        case "sports": return "球类运动"
+        case "water": return "水上运动"
+        case "outdoor": return "户外运动"
+        default: return "运动"
+        }
+    }
 
     private var workoutRepo: WorkoutRepository?
 
@@ -22,6 +35,7 @@ final class WorkoutViewModel {
         let workout = repo.createWorkout(category: category)
         activeWorkout = workout
         exercises = []
+        workoutCategory = category
     }
 
     func addExercise(name: String, category: String = "strength") {
@@ -34,6 +48,18 @@ final class WorkoutViewModel {
         guard exerciseIndex < exercises.count, let repo = workoutRepo else { return }
         let exercise = exercises[exerciseIndex]
         let set = repo.addSet(to: exercise, weight: weight, reps: reps, rpe: rpe)
+    }
+
+    func updateSet(exerciseIndex: Int, setIndex: Int, weight: Double, reps: Int, rpe: Int?) {
+        guard exerciseIndex < exercises.count else { return }
+        let exercise = exercises[exerciseIndex]
+        let sortedSets = exercise.sets.sorted { $0.setNumber < $1.setNumber }
+        guard setIndex < sortedSets.count else { return }
+        let set = sortedSets[setIndex]
+        set.weight = weight
+        set.reps = reps
+        set.rpe = rpe
+        set.isCompleted = true
     }
 
     func completeSet(exerciseIndex: Int, setIndex: Int, weight: Double, reps: Int, rpe: Int? = nil) {

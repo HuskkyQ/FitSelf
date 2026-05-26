@@ -5,6 +5,7 @@ struct WorkoutView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = WorkoutViewModel()
     @State private var showingExercisePicker = false
+    @State private var showingCustomExercise = false
     @State private var showingWorkoutHistory = false
     @State private var expandedExerciseIds: Set<PersistentIdentifier> = []
 
@@ -18,7 +19,7 @@ struct WorkoutView: View {
                 }
             }
             .background(Color.appBackground)
-            .navigationTitle("运动")
+            .navigationTitle(viewModel.isWorkoutActive ? viewModel.workoutCategoryDisplayName : "运动")
             .toolbar {
                 if viewModel.isWorkoutActive {
                     ToolbarItem(placement: .topBarLeading) {
@@ -50,7 +51,10 @@ struct WorkoutView: View {
                 }
             }
             .sheet(isPresented: $showingExercisePicker) {
-                ExercisePickerView(viewModel: viewModel)
+                ExercisePickerView(viewModel: viewModel, category: viewModel.workoutCategory)
+            }
+            .sheet(isPresented: $showingCustomExercise) {
+                CustomExerciseView(viewModel: viewModel, category: viewModel.workoutCategory)
             }
             .sheet(isPresented: $showingWorkoutHistory) {
                 NavigationStack {
@@ -82,10 +86,10 @@ struct WorkoutView: View {
                 .padding(.top, 40)
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                    workoutCategoryButton(title: "力量训练", icon: "dumbbell.fill", category: "strength", color: .chartExercise)
-                    workoutCategoryButton(title: "有氧运动", icon: "figure.run", category: "cardio", color: .chartCalories)
-                    workoutCategoryButton(title: "柔韧拉伸", icon: "figure.yoga", category: "flexibility", color: .chartProtein)
-                    workoutCategoryButton(title: "球类运动", icon: "basketball.fill", category: "sports", color: .chartCarbs)
+                    workoutCategoryButton(title: "力量训练", icon: "dumbbell.fill", category: "strength", color: Color.chartExercise)
+                    workoutCategoryButton(title: "有氧运动", icon: "figure.run", category: "cardio", color: Color.chartCalories)
+                    workoutCategoryButton(title: "柔韧拉伸", icon: "figure.yoga", category: "flexibility", color: Color.chartProtein)
+                    workoutCategoryButton(title: "球类运动", icon: "basketball.fill", category: "sports", color: Color.chartCarbs)
                 }
                 .padding(.horizontal, 16)
 
@@ -198,26 +202,46 @@ struct WorkoutView: View {
                     exercise: exercise,
                     isExpanded: expandedExerciseIds.contains(exercise.id),
                     onToggle: { toggleExercise(exercise.id) },
-                    onAddSet: { addSet(for: index) }
+                    onAddSet: { addSet(for: index) },
+                    onUpdateSet: { setIndex, weight, reps, rpe in
+                        viewModel.updateSet(exerciseIndex: index, setIndex: setIndex, weight: weight, reps: reps, rpe: rpe)
+                    }
                 )
             }
         }
     }
 
     private var addExerciseButton: some View {
-        Button {
-            showingExercisePicker = true
-        } label: {
-            HStack {
-                Image(systemName: "plus.circle.fill")
-                Text("添加动作")
+        HStack(spacing: 12) {
+            Button {
+                showingExercisePicker = true
+            } label: {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                    Text("选择动作")
+                }
+                .font(.appCallout)
+                .foregroundStyle(Color.appPrimary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(Color.appPrimary.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
-            .font(.appCallout)
-            .foregroundStyle(Color.appPrimary)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(Color.appPrimary.opacity(0.1))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+
+            Button {
+                showingCustomExercise = true
+            } label: {
+                HStack {
+                    Image(systemName: "pencil.circle.fill")
+                    Text("自定义")
+                }
+                .font(.appCallout)
+                .foregroundStyle(Color.appMutedForeground)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(Color.appCard)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
         }
     }
 
@@ -294,6 +318,15 @@ struct ExerciseRowView: View {
     let isExpanded: Bool
     let onToggle: () -> Void
     let onAddSet: () -> Void
+    let onUpdateSet: (Int, Double, Int, Int?) -> Void
+
+    @State private var setInputs: [SetInput] = []
+
+    struct SetInput {
+        var weight: String = ""
+        var reps: String = ""
+        var rpe: Int? = nil
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -328,7 +361,7 @@ struct ExerciseRowView: View {
             if isExpanded {
                 Divider().padding(.horizontal, 12)
 
-                setsTableView
+                setsInputTable
 
                 Button {
                     onAddSet()
@@ -347,58 +380,80 @@ struct ExerciseRowView: View {
         }
         .background(Color.appCard)
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .onChange(of: exercise.sets.count) { _, _ in
+            syncSetInputs()
+        }
+        .onAppear {
+            syncSetInputs()
+        }
     }
 
-    private var setsTableView: some View {
+    private var sortedSets: [WorkoutSet] {
+        exercise.sets.sorted { $0.setNumber < $1.setNumber }
+    }
+
+    private func syncSetInputs() {
+        let sets = sortedSets
+        let newInputs = sets.map { set -> SetInput in
+            if set.isCompleted {
+                return SetInput(weight: String(format: "%.1f", set.weight), reps: "\(set.reps)", rpe: set.rpe)
+            } else {
+                return SetInput(weight: "", reps: "", rpe: nil)
+            }
+        }
+        setInputs = newInputs
+    }
+
+    private var setsInputTable: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                Text("#").frame(width: 32)
-                Text("上次").frame(width: 56)
-                Text("重量").frame(width: 56)
-                Text("次数").frame(width: 56)
-                Text("RPE").frame(width: 40)
-                Spacer().frame(width: 32)
+                Text("#").frame(width: 28)
+                Text("重量").frame(width: 60)
+                Text("次数").frame(width: 50)
+                Text("RPE").frame(width: 50)
+                Spacer().frame(width: 28)
             }
             .font(.appCaption2)
             .foregroundStyle(Color.appMutedForeground)
             .padding(.vertical, 6)
 
-            ForEach(Array(exercise.sets.sorted { $0.setNumber < $1.setNumber }.enumerated()), id: \.element.id) { _, set in
+            ForEach(Array(sortedSets.enumerated()), id: \.element.id) { index, set in
                 HStack(spacing: 0) {
                     Text("\(set.setNumber)")
-                        .frame(width: 32)
+                        .frame(width: 28)
+                        .font(.appCaption)
                         .foregroundStyle(Color.appMutedForeground)
 
-                    Text(set.isCompleted ? "\(Int(set.weight))×\(set.reps)" : "—")
-                        .frame(width: 56)
-                        .foregroundStyle(Color.appMutedForeground)
+                    TextField("0", text: Binding(
+                        get: { index < setInputs.count ? setInputs[index].weight : "" },
+                        set: { if index < setInputs.count { setInputs[index].weight = $0 } }
+                    ))
+                    .keyboardType(.decimalPad)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 60)
+                    .font(.appCaption)
 
-                    Text(set.isCompleted ? String(format: "%.1f", set.weight) : "")
-                        .frame(width: 56)
-                        .foregroundStyle(Color.appForeground)
+                    TextField("0", text: Binding(
+                        get: { index < setInputs.count ? setInputs[index].reps : "" },
+                        set: { if index < setInputs.count { setInputs[index].reps = $0 } }
+                    ))
+                    .keyboardType(.numberPad)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 50)
+                    .font(.appCaption)
 
-                    Text(set.isCompleted ? "\(set.reps)" : "")
-                        .frame(width: 56)
-                        .foregroundStyle(Color.appForeground)
+                    TextField("0", text: Binding(
+                        get: { if index < setInputs.count, let rpe = setInputs[index].rpe { "\(rpe)" } else { "" } },
+                        set: { if index < setInputs.count { setInputs[index].rpe = Int($0) } }
+                    ))
+                    .keyboardType(.numberPad)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 50)
+                    .font(.appCaption)
 
-                    if let rpe = set.rpe {
-                        HStack(spacing: 2) {
-                            ForEach(1...10, id: \.self) { i in
-                                Circle()
-                                    .fill(i <= rpe ? Color.appPrimary : Color.appMuted.opacity(0.3))
-                                    .frame(width: 4, height: 4)
-                            }
-                        }
-                        .frame(width: 40)
-                    } else {
-                        Text("—").frame(width: 40)
-                            .foregroundStyle(Color.appMutedForeground)
-                    }
-
-                    Spacer().frame(width: 32)
+                    Spacer().frame(width: 28)
                 }
-                .font(.appFootnote)
-                .padding(.vertical, 6)
+                .padding(.vertical, 4)
             }
         }
         .padding(.horizontal, 12)
@@ -407,49 +462,41 @@ struct ExerciseRowView: View {
 
 struct ExercisePickerView: View {
     let viewModel: WorkoutViewModel
+    let category: String
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
-    @State private var selectedCategory = "strength"
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                Picker("类别", selection: $selectedCategory) {
-                    ForEach(WorkoutTypeStore.categories, id: \.0) { value, label in
-                        Text(label).tag(value)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+            List {
+                let types = WorkoutTypeStore.types(for: category)
+                let filtered = searchText.isEmpty ? types : types.filter { $0.name.contains(searchText) }
 
-                List {
-                    ForEach(filteredTypes) { type in
-                        Button {
-                            viewModel.addExercise(name: type.name, category: type.category)
-                            dismiss()
-                        } label: {
-                            HStack {
-                                Image(systemName: type.icon)
-                                    .foregroundStyle(Color.appPrimary)
-                                    .frame(width: 32)
+                ForEach(filtered) { type in
+                    Button {
+                        viewModel.addExercise(name: type.name, category: type.category)
+                        dismiss()
+                    } label: {
+                        HStack {
+                            Image(systemName: type.icon)
+                                .foregroundStyle(Color.appPrimary)
+                                .frame(width: 32)
 
-                                Text(type.name)
-                                    .font(.appCallout)
-                                    .foregroundStyle(Color.appForeground)
+                            Text(type.name)
+                                .font(.appCallout)
+                                .foregroundStyle(Color.appForeground)
 
-                                Spacer()
+                            Spacer()
 
-                                Text(String(format: "MET %.1f", type.metValue))
-                                    .font(.appCaption2)
-                                    .foregroundStyle(Color.appMutedForeground)
-                            }
-                            .padding(.vertical, 4)
+                            Text(String(format: "MET %.1f", type.metValue))
+                                .font(.appCaption2)
+                                .foregroundStyle(Color.appMutedForeground)
                         }
+                        .padding(.vertical, 4)
                     }
                 }
             }
-            .navigationTitle("选择动作")
+            .navigationTitle(categoryDisplayName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -460,12 +507,48 @@ struct ExercisePickerView: View {
         }
     }
 
-    private var filteredTypes: [WorkoutType] {
-        let types = WorkoutTypeStore.types(for: selectedCategory)
-        if searchText.isEmpty {
-            return types
+    private var categoryDisplayName: String {
+        switch category {
+        case "strength": return "力量训练"
+        case "cardio": return "有氧运动"
+        case "flexibility": return "柔韧拉伸"
+        case "sports": return "球类运动"
+        case "water": return "水上运动"
+        case "outdoor": return "户外运动"
+        default: return "选择动作"
         }
-        return types.filter { $0.name.contains(searchText) }
+    }
+}
+
+struct CustomExerciseView: View {
+    let viewModel: WorkoutViewModel
+    let category: String
+    @Environment(\.dismiss) private var dismiss
+    @State private var exerciseName = ""
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("自定义动作") {
+                    TextField("动作名称", text: $exerciseName)
+                }
+            }
+            .navigationTitle("添加自定义动作")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("添加") {
+                        guard !exerciseName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+                        viewModel.addExercise(name: exerciseName.trimmingCharacters(in: .whitespaces), category: category)
+                        dismiss()
+                    }
+                    .disabled(exerciseName.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("取消") { dismiss() }
+                }
+            }
+        }
     }
 }
 
@@ -473,11 +556,16 @@ struct WorkoutHistoryView: View {
     let viewModel: WorkoutViewModel
     @Environment(\.dismiss) private var dismiss
 
+    private let categoryNames: [String: String] = [
+        "strength": "力量训练", "cardio": "有氧运动", "flexibility": "柔韧拉伸",
+        "sports": "球类运动", "water": "水上运动", "outdoor": "户外运动"
+    ]
+
     var body: some View {
         List(viewModel.recentWorkouts) { workout in
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text(workout.workoutCategory == "strength" ? "力量训练" : "运动")
+                    Text(categoryNames[workout.workoutCategory, default: "运动"])
                         .font(.appTitle3)
                         .foregroundStyle(Color.appForeground)
 
@@ -513,9 +601,14 @@ struct WorkoutHistoryView: View {
 struct RecentWorkoutRow: View {
     let workout: Workout
 
+    private let categoryIcons: [String: String] = [
+        "strength": "dumbbell.fill", "cardio": "figure.run", "flexibility": "figure.yoga",
+        "sports": "basketball.fill", "water": "figure.pool.swim", "outdoor": "figure.hiking"
+    ]
+
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: workout.workoutCategory == "strength" ? "dumbbell.fill" : "figure.run")
+            Image(systemName: categoryIcons[workout.workoutCategory, default: "figure.run"])
                 .foregroundStyle(Color.chartExercise)
                 .frame(width: 32)
 
