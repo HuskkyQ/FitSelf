@@ -45,31 +45,8 @@ struct SettingsView: View {
                 viewModel.configure(context: modelContext)
             }
             .onChange(of: viewModel.appearanceTheme) { _, newValue in
-                applyTheme(newValue)
+                appearanceTheme = newValue
             }
-        }
-    }
-
-    // MARK: - 主题切换
-
-    private func applyTheme(_ theme: String) {
-        appearanceTheme = theme
-        switch theme {
-        case "light":
-            UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .flatMap { $0.windows }
-                .forEach { $0.overrideUserInterfaceStyle = .light }
-        case "dark":
-            UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .flatMap { $0.windows }
-                .forEach { $0.overrideUserInterfaceStyle = .dark }
-        default:
-            UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .flatMap { $0.windows }
-                .forEach { $0.overrideUserInterfaceStyle = .unspecified }
         }
     }
 
