@@ -394,6 +394,8 @@ struct ExerciseCardView: View {
     let exercise: WorkoutExercise
     let onEdit: () -> Void
 
+    @State private var showingRPEInfo = false
+
     private var sortedSets: [WorkoutSet] {
         exercise.sets.sorted { $0.setNumber < $1.setNumber }
     }
@@ -440,6 +442,11 @@ struct ExerciseCardView: View {
         }
         .background(Color.appCard)
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .alert("RPE 主观疲劳度评分", isPresented: $showingRPEInfo) {
+            Button("知道了") {}
+        } message: {
+            Text("RPE（Rating of Perceived Exertion）用于衡量每组训练的难度：\n\n1-2：非常轻松\n3-4：轻松\n5-6：中等\n7-8：困难\n9-10：极限\n\n建议大部分训练组保持在 7-8 的强度。")
+        }
     }
 
     private var setsTable: some View {
@@ -451,11 +458,19 @@ struct ExerciseCardView: View {
                     .frame(maxWidth: .infinity)
                 Text("次数")
                     .frame(maxWidth: .infinity)
-                Text("RPE")
+                Button {
+                    showingRPEInfo = true
+                } label: {
+                    HStack(spacing: 2) {
+                        Text("RPE")
+                        Image(systemName: "questionmark.circle.fill")
+                            .font(.system(size: 10))
+                    }
                     .frame(maxWidth: .infinity)
+                }
+                .foregroundStyle(Color.appMutedForeground)
             }
             .font(.appCaption2)
-            .foregroundStyle(Color.appMutedForeground)
             .padding(.vertical, 6)
 
             Divider()
@@ -563,6 +578,7 @@ struct EditExerciseSetsView: View {
     let onCancel: () -> Void
 
     @State private var sets: [EditSetDetail]
+    @State private var showingRPEInfo = false
 
     init(exerciseName: String, currentSets: [EditSetDetail], onSave: @escaping ([EditSetDetail]) -> Void, onCancel: @escaping () -> Void) {
         self.exerciseName = exerciseName
@@ -606,9 +622,13 @@ struct EditExerciseSetsView: View {
                                 .textFieldStyle(.roundedBorder)
                                 .frame(width: 40)
 
-                            Text("RPE")
-                                .font(.appCaption2)
-                                .foregroundStyle(Color.appMutedForeground)
+                            Button {
+                                showingRPEInfo = true
+                            } label: {
+                                Image(systemName: "info.circle")
+                                    .font(.caption2)
+                                    .foregroundStyle(Color.appMutedForeground)
+                            }
                         }
                     }
                     .onDelete { indexSet in
@@ -618,9 +638,20 @@ struct EditExerciseSetsView: View {
                     HStack {
                         Text(exerciseName)
                         Spacer()
-                        Text("kg · 次 · RPE")
-                            .font(.appCaption2)
+                        HStack(spacing: 4) {
+                            Text("kg · 次")
+                            Button {
+                                showingRPEInfo = true
+                            } label: {
+                                HStack(spacing: 2) {
+                                    Text("RPE")
+                                    Image(systemName: "questionmark.circle.fill")
+                                        .font(.caption2)
+                                }
+                            }
                             .foregroundStyle(Color.appMutedForeground)
+                        }
+                        .font(.appCaption2)
                     }
                 }
 
@@ -645,6 +676,11 @@ struct EditExerciseSetsView: View {
                     }
                     .fontWeight(.bold)
                 }
+            }
+            .alert("RPE 主观疲劳度评分", isPresented: $showingRPEInfo) {
+                Button("知道了") {}
+            } message: {
+                Text("RPE（Rating of Perceived Exertion）用于衡量每组训练的难度：\n\n1-2：非常轻松\n3-4：轻松\n5-6：中等\n7-8：困难\n9-10：极限\n\n建议大部分训练组保持在 7-8 的强度。")
             }
         }
     }
