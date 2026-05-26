@@ -11,6 +11,7 @@ struct WorkoutView: View {
     @State private var editingExerciseIndex: Int?
     @State private var editingExerciseSets: [EditSetDetail] = []
     @State private var exerciseToAdd: WorkoutType?
+    @State private var isTimerVisibleInScroll = true
 
     var body: some View {
         NavigationStack {
@@ -172,11 +173,8 @@ struct WorkoutView: View {
         ScrollView {
             VStack(spacing: 16) {
                 workoutTimerSection
-                    .scrollTransition { content, phase in
-                        content
-                            .scaleEffect(phase.isIdentity ? 1 : 0.95)
-                            .opacity(phase.isIdentity ? 1 : 0.7)
-                    }
+                    .onAppear { withAnimation(.easeInOut) { isTimerVisibleInScroll = true } }
+                    .onDisappear { withAnimation(.easeInOut) { isTimerVisibleInScroll = false } }
 
                 exerciseListSection
 
@@ -189,9 +187,58 @@ struct WorkoutView: View {
             .padding(.horizontal, 16)
             .padding(.top, 8)
         }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            compactStatsBar
+                .opacity(isTimerVisibleInScroll ? 0 : 1)
+                .animation(.easeInOut(duration: 0.25), value: isTimerVisibleInScroll)
+        }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             workoutBottomBar
         }
+    }
+
+    private var compactStatsBar: some View {
+        HStack(spacing: 16) {
+            VStack(spacing: 2) {
+                Text("时长")
+                    .font(.appCaption2)
+                    .foregroundStyle(Color.appMutedForeground)
+                Text("\(viewModel.totalDuration)分钟")
+                    .font(.appCallout)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.appForeground)
+            }
+            .frame(maxWidth: .infinity)
+
+            Divider().frame(height: 24)
+
+            VStack(spacing: 2) {
+                Text("热量")
+                    .font(.appCaption2)
+                    .foregroundStyle(Color.appMutedForeground)
+                Text("\(Int(viewModel.totalCalories))kcal")
+                    .font(.appCallout)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.chartCalories)
+            }
+            .frame(maxWidth: .infinity)
+
+            Divider().frame(height: 24)
+
+            VStack(spacing: 2) {
+                Text("动作")
+                    .font(.appCaption2)
+                    .foregroundStyle(Color.appMutedForeground)
+                Text("\(viewModel.exercises.count)个")
+                    .font(.appCallout)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.appForeground)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 16)
+        .background(.ultraThinMaterial)
     }
 
     private var workoutTimerSection: some View {
@@ -345,7 +392,7 @@ struct WorkoutView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color.appBackground)
+        .background(.ultraThinMaterial)
     }
 
     private func toggleExercise(_ id: PersistentIdentifier) {

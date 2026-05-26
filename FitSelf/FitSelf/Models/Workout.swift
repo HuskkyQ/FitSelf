@@ -54,6 +54,7 @@ final class WorkoutExercise {
     var createdAt: Date
 
     var workout: Workout?
+    @Relationship(deleteRule: .cascade, inverse: \WorkoutSet.exercise)
     var sets: [WorkoutSet] = []
 
     init(exerciseName: String,
