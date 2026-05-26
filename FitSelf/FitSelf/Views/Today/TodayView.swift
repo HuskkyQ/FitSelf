@@ -3,6 +3,7 @@ import SwiftUI
 struct TodayView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = TodayViewModel()
+    var onSettingsTap: (() -> Void)? = nil
 
     var body: some View {
         NavigationStack {
@@ -51,8 +52,8 @@ struct TodayView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        SettingsView()
+                    Button {
+                        onSettingsTap?()
                     } label: {
                         Image(systemName: "gearshape")
                             .foregroundStyle(Color.appMutedForeground)
