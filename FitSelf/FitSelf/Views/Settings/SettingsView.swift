@@ -327,10 +327,16 @@ struct ProfileEditorView: View {
                 Section("基本信息") {
                     TextField("昵称", text: $viewModel.nickname)
 
-                    Picker("性别", selection: $viewModel.gender) {
-                        Text("男").tag("male")
-                        Text("女").tag("female")
-                        Text("其他").tag("other")
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("性别")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Picker("", selection: $viewModel.gender) {
+                            Text("男").tag("male")
+                            Text("女").tag("female")
+                            Text("其他").tag("other")
+                        }
+                        .pickerStyle(.segmented)
                     }
 
                     DatePicker("出生日期", selection: $viewModel.birthDate, displayedComponents: .date)
@@ -355,18 +361,30 @@ struct ProfileEditorView: View {
                 }
 
                 Section("运动设置") {
-                    Picker("活动水平", selection: $viewModel.activityLevel) {
-                        Text("久坐").tag("sedentary")
-                        Text("轻量活动").tag("light")
-                        Text("中等活动").tag("moderate")
-                        Text("重度活动").tag("heavy")
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("活动水平")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Picker("", selection: $viewModel.activityLevel) {
+                            Text("久坐").tag("sedentary")
+                            Text("轻量").tag("light")
+                            Text("中等").tag("moderate")
+                            Text("重度").tag("heavy")
+                        }
+                        .pickerStyle(.segmented)
                     }
 
-                    Picker("健身目标", selection: $viewModel.fitnessGoal) {
-                        Text("减脂").tag("lose")
-                        Text("增肌").tag("gain")
-                        Text("维持").tag("maintain")
-                        Text("塑形").tag("shape")
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("健身目标")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Picker("", selection: $viewModel.fitnessGoal) {
+                            Text("减脂").tag("lose")
+                            Text("增肌").tag("gain")
+                            Text("维持").tag("maintain")
+                            Text("塑形").tag("shape")
+                        }
+                        .pickerStyle(.segmented)
                     }
                 }
 
