@@ -622,13 +622,9 @@ struct EditExerciseSetsView: View {
                                 .textFieldStyle(.roundedBorder)
                                 .frame(width: 40)
 
-                            Button {
-                                showingRPEInfo = true
-                            } label: {
-                                Image(systemName: "info.circle")
-                                    .font(.caption2)
-                                    .foregroundStyle(Color.appMutedForeground)
-                            }
+                            Text("RPE")
+                                .font(.appCaption)
+                                .foregroundStyle(Color.appMutedForeground)
                         }
                     }
                     .onDelete { indexSet in

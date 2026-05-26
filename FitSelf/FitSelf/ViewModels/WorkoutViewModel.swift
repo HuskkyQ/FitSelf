@@ -57,12 +57,25 @@ final class WorkoutViewModel {
     func updateExerciseSets(exerciseIndex: Int, sets: [EditSetDetail]) {
         guard exerciseIndex < exercises.count, let repo = workoutRepo else { return }
         let exercise = exercises[exerciseIndex]
-        for existingSet in exercise.sets {
-            repo.deleteSet(existingSet)
+        let sortedExisting = exercise.sets.sorted { $0.setNumber < $1.setNumber }
+        let maxCount = max(sortedExisting.count, sets.count)
+
+        for i in 0..<maxCount {
+            if i < sortedExisting.count, i < sets.count {
+                let existing = sortedExisting[i]
+                existing.weight = sets[i].weight
+                existing.reps = sets[i].reps
+                existing.rpe = sets[i].rpe
+                existing.isCompleted = true
+                existing.setNumber = i + 1
+            } else if i < sets.count {
+                _ = repo.addSet(to: exercise, weight: sets[i].weight, reps: sets[i].reps, rpe: sets[i].rpe)
+            } else {
+                repo.deleteSet(sortedExisting[i])
+            }
         }
-        for detail in sets {
-            _ = repo.addSet(to: exercise, weight: detail.weight, reps: detail.reps, rpe: detail.rpe)
-        }
+
+        try? repo.save()
     }
 
     func addSet(to exerciseIndex: Int, weight: Double = 0, reps: Int = 0, rpe: Int? = nil) {
