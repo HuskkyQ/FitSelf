@@ -7,7 +7,6 @@ struct WorkoutView: View {
     @State private var showingExercisePicker = false
     @State private var showingCustomExercise = false
     @State private var showingWorkoutHistory = false
-    @State private var expandedExerciseIds: Set<PersistentIdentifier> = []
     @State private var editingExerciseIndex: Int?
     @State private var editingExerciseSets: [EditSetDetail] = []
     @State private var exerciseToAdd: WorkoutType?
@@ -287,15 +286,9 @@ struct WorkoutView: View {
             ForEach(Array(viewModel.exercises.enumerated()), id: \.element.id) { index, exercise in
                 ExerciseCardView(
                     exercise: exercise,
-                    isExpanded: expandedExerciseIds.contains(exercise.id),
-                    onToggle: {
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                            toggleExercise(exercise.id)
-                        }
-                    },
                     onEdit: {
-                        let exercise = viewModel.exercises[index]
-                        editingExerciseSets = exercise.sets.sorted(by: { $0.setNumber < $1.setNumber }).map {
+                        let ex = viewModel.exercises[index]
+                        editingExerciseSets = ex.sets.sorted(by: { $0.setNumber < $1.setNumber }).map {
                             EditSetDetail(weight: $0.weight, reps: $0.reps, rpe: $0.rpe)
                         }
                         if editingExerciseSets.isEmpty {
@@ -393,156 +386,116 @@ struct WorkoutView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
     }
-
-    private func toggleExercise(_ id: PersistentIdentifier) {
-        if expandedExerciseIds.contains(id) {
-            expandedExerciseIds.remove(id)
-        } else {
-            expandedExerciseIds.insert(id)
-        }
-    }
 }
 
-// MARK: - 动作卡片（只读展示 + 编辑按钮）
+// MARK: - 动作卡片（全量展示 + 右上角编辑）
 
 struct ExerciseCardView: View {
     let exercise: WorkoutExercise
-    let isExpanded: Bool
-    let onToggle: () -> Void
     let onEdit: () -> Void
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Button { onToggle() } label: {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(exercise.exerciseName)
-                            .font(.appCallout)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(Color.appForeground)
-
-                        HStack(spacing: 8) {
-                            Text("\(exercise.sets.count) 组")
-                            if exercise.totalVolume > 0 {
-                                Text("·")
-                                Text(String(format: "%.1f kg", exercise.totalVolume))
-                            }
-                        }
-                        .font(.appCaption)
-                        .foregroundStyle(Color.appMutedForeground)
-                    }
-
-                    Spacer()
-
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .foregroundStyle(Color.appMutedForeground)
-                        .font(.caption)
-                        .rotationEffect(.degrees(0))
-                }
-                .padding(12)
-            }
-
-            if isExpanded {
-                VStack(spacing: 0) {
-                    Divider().padding(.horizontal, 12)
-
-                    HStack {
-                        Text("组数详情")
-                            .font(.appCaption)
-                            .foregroundStyle(Color.appMutedForeground)
-                        Spacer()
-                        Button {
-                            onEdit()
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "pencil")
-                                    .font(.appCaption2)
-                                Text("编辑")
-                                    .font(.appCaption)
-                            }
-                            .foregroundStyle(Color.appPrimary)
-                        }
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.top, 8)
-
-                    setsDisplayList
-
-                    Button {
-                        onEdit()
-                    } label: {
-                        Text("编辑组数")
-                            .font(.appFootnote)
-                            .foregroundStyle(Color.appPrimary)
-                            .padding(.vertical, 8)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 8)
-                }
-            }
-        }
-        .background(Color.appCard)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: isExpanded)
-    }
 
     private var sortedSets: [WorkoutSet] {
         exercise.sets.sorted { $0.setNumber < $1.setNumber }
     }
 
-    private var setsDisplayList: some View {
-        VStack(spacing: 6) {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(exercise.exerciseName)
+                        .font(.appCallout)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color.appForeground)
+
+                    HStack(spacing: 6) {
+                        Text("\(exercise.sets.count)组")
+                        if exercise.totalVolume > 0 {
+                            Text("·")
+                            Text(String(format: "%.1fkg", exercise.totalVolume))
+                        }
+                    }
+                    .font(.appCaption)
+                    .foregroundStyle(Color.appMutedForeground)
+                }
+
+                Spacer()
+
+                Button {
+                    onEdit()
+                } label: {
+                    Image(systemName: "pencil.circle")
+                        .font(.title3)
+                        .foregroundStyle(Color.appPrimary)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.top, 12)
+            .padding(.bottom, sortedSets.isEmpty ? 12 : 6)
+
+            if !sortedSets.isEmpty {
+                setsTable
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 12)
+            }
+        }
+        .background(Color.appCard)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var setsTable: some View {
+        VStack(spacing: 0) {
             HStack(spacing: 0) {
                 Text("#")
-                    .frame(width: 28)
+                    .frame(maxWidth: .infinity)
                 Text("重量")
-                    .frame(width: 70)
+                    .frame(maxWidth: .infinity)
                 Text("次数")
-                    .frame(width: 50)
+                    .frame(maxWidth: .infinity)
                 Text("RPE")
-                    .frame(width: 40)
-                Spacer()
-                    .frame(width: 28)
+                    .frame(maxWidth: .infinity)
             }
             .font(.appCaption2)
             .foregroundStyle(Color.appMutedForeground)
+            .padding(.vertical, 6)
 
-            ForEach(sortedSets) { set in
+            Divider()
+
+            ForEach(Array(sortedSets.enumerated()), id: \.element.id) { index, set in
                 HStack(spacing: 0) {
-                    Text("\(set.setNumber)")
-                        .frame(width: 28)
+                    Text("\(index + 1)")
+                        .frame(maxWidth: .infinity)
                         .foregroundStyle(Color.appMutedForeground)
 
-                    Text(set.isCompleted ? String(format: "%.1f kg", set.weight) : "—")
-                        .frame(width: 70)
-                        .foregroundStyle(set.isCompleted ? Color.appForeground : Color.appMutedForeground)
+                    Text(set.weight > 0 ? String(format: "%.1f", set.weight) : "—")
+                        .frame(maxWidth: .infinity)
+                        .foregroundStyle(set.weight > 0 ? Color.appForeground : Color.appMutedForeground)
 
-                    Text(set.isCompleted ? "\(set.reps)" : "—")
-                        .frame(width: 50)
-                        .foregroundStyle(set.isCompleted ? Color.appForeground : Color.appMutedForeground)
+                    Text(set.reps > 0 ? "\(set.reps)" : "—")
+                        .frame(maxWidth: .infinity)
+                        .foregroundStyle(set.reps > 0 ? Color.appForeground : Color.appMutedForeground)
 
-                    if let rpe = set.rpe, set.isCompleted {
+                    if let rpe = set.rpe, rpe > 0 {
                         Text("\(rpe)")
-                            .frame(width: 40)
+                            .frame(maxWidth: .infinity)
                             .foregroundStyle(Color.appPrimary)
                     } else {
                         Text("—")
-                            .frame(width: 40)
+                            .frame(maxWidth: .infinity)
                             .foregroundStyle(Color.appMutedForeground)
                     }
-
-                    Spacer()
-                        .frame(width: 28)
                 }
                 .font(.appCaption)
+                .padding(.vertical, 5)
+
+                if index < sortedSets.count - 1 {
+                    Divider()
+                }
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
     }
 }
 
-// MARK: - 添加动作时设置组数和次数
+// MARK: - 添加动作时设置组数、次数和重量
 
 struct AddExerciseSetsView: View {
     let exerciseName: String
@@ -601,7 +554,7 @@ struct AddExerciseSetsView: View {
     }
 }
 
-// MARK: - 编辑动作组数
+// MARK: - 编辑动作组数（可编辑每组详情）
 
 struct EditExerciseSetsView: View {
     let exerciseName: String
@@ -613,32 +566,57 @@ struct EditExerciseSetsView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section(exerciseName) {
+            List {
+                Section {
                     ForEach($sets) { $set in
-                        HStack {
-                            Text("第\(sets.firstIndex(where: { $0.id == set.id })! + 1)组")
-                                .frame(width: 50)
+                        HStack(spacing: 12) {
+                            Text("\(sets.firstIndex(where: { $0.id == set.id })! + 1)")
+                                .font(.appCaption)
                                 .foregroundStyle(Color.appMutedForeground)
+                                .frame(width: 20)
 
-                            TextField("重量", value: $set.weight, format: .number)
+                            TextField("0", value: $set.weight, format: .number)
                                 .keyboardType(.decimalPad)
                                 .textFieldStyle(.roundedBorder)
-                                .frame(width: 70)
+                                .frame(width: 64)
 
                             Text("kg")
+                                .font(.appCaption)
                                 .foregroundStyle(Color.appMutedForeground)
 
-                            TextField("次数", value: $set.reps, format: .number)
+                            TextField("0", value: $set.reps, format: .number)
                                 .keyboardType(.numberPad)
                                 .textFieldStyle(.roundedBorder)
-                                .frame(width: 55)
+                                .frame(width: 48)
+
+                            Text("次")
+                                .font(.appCaption)
+                                .foregroundStyle(Color.appMutedForeground)
+
+                            TextField("0", value: $set.rpe, format: .number)
+                                .keyboardType(.numberPad)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 40)
+
+                            Text("RPE")
+                                .font(.appCaption2)
+                                .foregroundStyle(Color.appMutedForeground)
                         }
                     }
                     .onDelete { indexSet in
                         sets.remove(atOffsets: indexSet)
                     }
+                } header: {
+                    HStack {
+                        Text(exerciseName)
+                        Spacer()
+                        Text("kg · 次 · RPE")
+                            .font(.appCaption2)
+                            .foregroundStyle(Color.appMutedForeground)
+                    }
+                }
 
+                Section {
                     Button {
                         sets.append(EditSetDetail(weight: 0, reps: 0, rpe: nil))
                     } label: {
