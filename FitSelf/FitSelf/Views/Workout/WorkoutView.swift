@@ -10,7 +10,7 @@ struct WorkoutView: View {
     @State private var editingExerciseIndex: Int?
     @State private var editingExerciseSets: [EditSetDetail] = []
     @State private var exerciseToAdd: WorkoutType?
-    @State private var isTimerVisibleInScroll = true
+    @State private var timerScaleProgress: CGFloat = 0
 
     var body: some View {
         NavigationStack {
@@ -172,8 +172,20 @@ struct WorkoutView: View {
         ScrollView {
             VStack(spacing: 16) {
                 workoutTimerSection
-                    .onAppear { withAnimation(.easeInOut) { isTimerVisibleInScroll = true } }
-                    .onDisappear { withAnimation(.easeInOut) { isTimerVisibleInScroll = false } }
+                    .background(
+                        GeometryReader { geo in
+                            Color.clear
+                                .onChange(of: geo.frame(in: .named("scroll")).minY) { _, newY in
+                                    let sectionHeight = geo.size.height + 16
+                                    let progress = max(0, min(1, -newY / sectionHeight))
+                                    withAnimation(.easeInOut(duration: 0.15)) {
+                                        timerScaleProgress = progress
+                                    }
+                                }
+                        }
+                    )
+                    .scaleEffect(x: 1, y: 1 - timerScaleProgress * 0.4, anchor: .top)
+                    .opacity(1 - timerScaleProgress)
 
                 exerciseListSection
 
@@ -186,10 +198,11 @@ struct WorkoutView: View {
             .padding(.horizontal, 16)
             .padding(.top, 8)
         }
+        .coordinateSpace(name: "scroll")
         .safeAreaInset(edge: .top, spacing: 0) {
             compactStatsBar
-                .opacity(isTimerVisibleInScroll ? 0 : 1)
-                .animation(.easeInOut(duration: 0.25), value: isTimerVisibleInScroll)
+                .offset(y: timerScaleProgress > 0 ? 0 : -16)
+                .opacity(timerScaleProgress)
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             workoutBottomBar
@@ -365,10 +378,10 @@ struct WorkoutView: View {
             Button("取消训练") {
                 viewModel.cancelWorkout()
             }
-            .foregroundStyle(Color.appDestructive)
+            .foregroundStyle(.white)
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(Color.appDestructive.opacity(0.15))
+            .background(Color.appDestructive)
             .clipShape(RoundedRectangle(cornerRadius: 12))
 
             Button("完成训练") {
@@ -538,8 +551,6 @@ struct AddExerciseSetsView: View {
                         Text("重量")
                         TextField("0", value: $weight, format: .number)
                             .keyboardType(.decimalPad)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 80)
                         Text("kg")
                     }
 
@@ -698,6 +709,7 @@ struct ExercisePickerView: View {
     let onSelect: (WorkoutType) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
+    @State private var showingMETInfo = false
 
     var body: some View {
         NavigationStack {
@@ -732,11 +744,24 @@ struct ExercisePickerView: View {
             .navigationTitle(categoryDisplayName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showingMETInfo = true
+                    } label: {
+                        Image(systemName: "questionmark.circle")
+                            .foregroundStyle(Color.appMutedForeground)
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("取消") { dismiss() }
                 }
             }
             .searchable(text: $searchText, prompt: "搜索动作")
+            .alert("MET 代谢当量", isPresented: $showingMETInfo) {
+                Button("知道了") {}
+            } message: {
+                Text("MET（Metabolic Equivalent of Task）衡量运动强度：\n\n1 MET = 静坐状态耗氧量（约 3.5ml/kg/min）\n\n值越高热量消耗越大：\n· 3-4 MET：低强度（瑜伽、散步）\n· 5-7 MET：中强度（力量训练、慢跑）\n· 8-10 MET：高强度（跑步、跳绳）\n· 10+ MET：极高强度（冲刺、HIIT）")
+            }
         }
     }
 
