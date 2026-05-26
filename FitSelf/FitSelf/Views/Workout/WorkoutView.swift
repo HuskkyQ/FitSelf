@@ -562,7 +562,15 @@ struct EditExerciseSetsView: View {
     let onSave: ([EditSetDetail]) -> Void
     let onCancel: () -> Void
 
-    @State private var sets: [EditSetDetail] = []
+    @State private var sets: [EditSetDetail]
+
+    init(exerciseName: String, currentSets: [EditSetDetail], onSave: @escaping ([EditSetDetail]) -> Void, onCancel: @escaping () -> Void) {
+        self.exerciseName = exerciseName
+        self.currentSets = currentSets
+        self.onSave = onSave
+        self.onCancel = onCancel
+        _sets = State(initialValue: currentSets)
+    }
 
     var body: some View {
         NavigationStack {
@@ -638,9 +646,6 @@ struct EditExerciseSetsView: View {
                     .fontWeight(.bold)
                 }
             }
-        }
-        .onAppear {
-            sets = currentSets
         }
     }
 }
