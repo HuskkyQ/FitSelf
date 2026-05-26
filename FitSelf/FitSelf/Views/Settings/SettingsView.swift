@@ -44,6 +44,9 @@ struct SettingsView: View {
             .task {
                 viewModel.configure(context: modelContext, appearanceTheme: appearanceTheme)
             }
+            .onDisappear {
+                try? viewModel.saveProfile()
+            }
         }
     }
 
