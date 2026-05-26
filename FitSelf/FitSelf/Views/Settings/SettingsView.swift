@@ -4,7 +4,7 @@ import SwiftData
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = SettingsViewModel()
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
+    @State private var isEditingProfile = false
 
     var body: some View {
         NavigationStack {
@@ -28,88 +28,110 @@ struct SettingsView: View {
             }
             .background(Color.appBackground)
             .navigationTitle("设置")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        try? viewModel.saveProfile()
+                    } label: {
+                        Text("保存")
+                            .font(.appCallout)
+                            .foregroundStyle(Color.appPrimary)
+                    }
+                }
+            }
             .task {
                 viewModel.configure(context: modelContext)
             }
         }
     }
 
-    // MARK: - 个人信息
+    // MARK: - 个人信息（只读展示 + 编辑按钮）
 
     private var profileSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("个人信息")
-                .font(.appTitle3)
-                .foregroundStyle(Color.appForeground)
+            HStack {
+                Text("个人信息")
+                    .font(.appTitle3)
+                    .foregroundStyle(Color.appForeground)
+
+                Spacer()
+
+                Button {
+                    isEditingProfile = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "pencil")
+                            .font(.appCaption)
+                        Text("编辑")
+                            .font(.appCallout)
+                    }
+                    .foregroundStyle(Color.appPrimary)
+                }
+            }
 
             VStack(spacing: 12) {
-                HStack {
-                    Image(systemName: "person.circle.fill")
-                        .foregroundStyle(Color.appPrimary)
-                    Text("昵称")
-                    Spacer()
-                    TextField("你的名字", text: $viewModel.nickname)
-                        .multilineTextAlignment(.trailing)
-                        .foregroundStyle(Color.appMutedForeground)
-                }
-
-                Divider()
-
-                HStack {
-                    Image(systemName: "figure.stand")
-                        .foregroundStyle(Color.appPrimary)
-                    Text("性别")
-                    Spacer()
-                    Picker("", selection: $viewModel.gender) {
-                        Text("男").tag("male")
-                        Text("女").tag("female")
-                        Text("其他").tag("other")
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(width: 180)
-                }
-
-                Divider()
-
-                DatePicker(selection: $viewModel.birthDate, displayedComponents: .date) {
-                    Label("出生日期", systemImage: "calendar")
-                }
-
-                Divider()
-
-                HStack {
-                    Image(systemName: "ruler")
-                        .foregroundStyle(Color.appPrimary)
-                    Text("身高")
-                    Spacer()
-                    TextField("170", value: $viewModel.height, format: .number)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                    Text("cm")
-                        .foregroundStyle(Color.appMutedForeground)
-                }
-
-                Divider()
-
-                HStack {
-                    Image(systemName: "target")
-                        .foregroundStyle(Color.appPrimary)
-                    Text("目标体重")
-                    Spacer()
-                    TextField("65", value: $viewModel.targetWeight, format: .number)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                    Text("kg")
-                        .foregroundStyle(Color.appMutedForeground)
-                }
+                profileRow(icon: "person.circle.fill", label: "昵称", value: viewModel.nickname.isEmpty ? "未设置" : viewModel.nickname)
+                profileRow(icon: "figure.stand", label: "性别", value: genderText)
+                profileRow(icon: "calendar", label: "出生日期", value: viewModel.birthDate.formatted(date: .abbreviated, time: .omitted))
+                profileRow(icon: "ruler", label: "身高", value: "\(Int(viewModel.height)) cm")
+                profileRow(icon: "target", label: "目标体重", value: "\(Int(viewModel.targetWeight)) kg")
+                profileRow(icon: "figure.run", label: "活动水平", value: activityLevelText)
+                profileRow(icon: "flame.fill", label: "健身目标", value: fitnessGoalText)
             }
             .padding(16)
             .background(Color.appCard)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
+        .sheet(isPresented: $isEditingProfile) {
+            ProfileEditorView(viewModel: viewModel)
+        }
     }
 
-    // MARK: - 目标（垂直卡片布局）
+    private func profileRow(icon: String, label: String, value: String) -> some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundStyle(Color.appPrimary)
+                .frame(width: 24)
+            Text(label)
+                .font(.appCallout)
+                .foregroundStyle(Color.appForeground)
+            Spacer()
+            Text(value)
+                .font(.appCallout)
+                .foregroundStyle(Color.appMutedForeground)
+        }
+    }
+
+    private var genderText: String {
+        switch viewModel.gender {
+        case "male": return "男"
+        case "female": return "女"
+        default: return "其他"
+        }
+    }
+
+    private var activityLevelText: String {
+        switch viewModel.activityLevel {
+        case "sedentary": return "久坐"
+        case "light": return "轻量活动"
+        case "moderate": return "中等活动"
+        case "heavy": return "重度活动"
+        default: return "中等活动"
+        }
+    }
+
+    private var fitnessGoalText: String {
+        switch viewModel.fitnessGoal {
+        case "lose": return "减脂"
+        case "gain": return "增肌"
+        case "maintain": return "维持"
+        case "shape": return "塑形"
+        default: return "维持"
+        }
+    }
+
+    // MARK: - 每日目标（只读展示 + 编辑按钮）
 
     private var goalsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -118,83 +140,33 @@ struct SettingsView: View {
                 .foregroundStyle(Color.appForeground)
 
             VStack(spacing: 12) {
-                goalCard(
-                    icon: "flame.fill",
-                    iconColor: .chartCalories,
-                    title: "卡路里",
-                    value: $viewModel.dailyCalorieGoal,
-                    unit: "kcal",
-                    progress: 0,
-                    progressColor: .chartCalories
-                )
-
-                goalCard(
-                    icon: "figure.run",
-                    iconColor: .chartExercise,
-                    title: "运动时长",
-                    value: $viewModel.dailyExerciseGoal,
-                    unit: "分钟",
-                    progress: 0,
-                    progressColor: .chartExercise
-                )
-
-                goalCard(
-                    icon: "drop.fill",
-                    iconColor: .chartWater,
-                    title: "饮水量",
-                    value: $viewModel.dailyWaterGoal,
-                    unit: "ml",
-                    progress: 0,
-                    progressColor: .chartWater
-                )
+                goalDisplayRow(icon: "flame.fill", iconColor: Color.chartCalories, title: "卡路里", value: "\(viewModel.dailyCalorieGoal) kcal")
+                goalDisplayRow(icon: "figure.run", iconColor: Color.chartExercise, title: "运动时长", value: "\(viewModel.dailyExerciseGoal) 分钟")
+                goalDisplayRow(icon: "drop.fill", iconColor: Color.chartWater, title: "饮水量", value: "\(viewModel.dailyWaterGoal) ml")
             }
-
-            Button("重新计算推荐值") {
-                viewModel.recalculateCalories()
-            }
-            .font(.appCallout)
-            .foregroundStyle(Color.appPrimary)
-            .frame(maxWidth: .infinity, alignment: .center)
         }
     }
 
-    private func goalCard(icon: String, iconColor: Color, title: String, value: Binding<Int>, unit: String, progress: Double, progressColor: Color) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundStyle(iconColor)
-                    .font(.title3)
-
-                Text(title)
-                    .font(.appCallout)
-                    .foregroundStyle(Color.appForeground)
-
-                Spacer()
-
-                HStack(spacing: 4) {
-                    TextField("0", value: value, format: .number)
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                        .font(.appTitle3)
-                        .fontWeight(.bold)
-                        .foregroundStyle(Color.appForeground)
-                        .frame(width: 60)
-
-                    Text(unit)
-                        .font(.appCaption)
-                        .foregroundStyle(Color.appMutedForeground)
-                }
-            }
-
-            ProgressView(value: progress)
-                .tint(progressColor)
+    private func goalDisplayRow(icon: String, iconColor: Color, title: String, value: String) -> some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundStyle(iconColor)
+                .font(.title3)
+            Text(title)
+                .font(.appCallout)
+                .foregroundStyle(Color.appForeground)
+            Spacer()
+            Text(value)
+                .font(.appCallout)
+                .fontWeight(.bold)
+                .foregroundStyle(Color.appForeground)
         }
         .padding(16)
         .background(Color.appCard)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    // MARK: - 宏量营养素
+    // MARK: - 宏量营养素（只读展示）
 
     private var macroSection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -202,10 +174,10 @@ struct SettingsView: View {
                 .font(.appTitle3)
                 .foregroundStyle(Color.appForeground)
 
-            VStack(spacing: 16) {
-                macroSlider(label: "碳水化合物", ratio: $viewModel.macroRatioCarbs, color: .chartCarbs)
-                macroSlider(label: "蛋白质", ratio: $viewModel.macroRatioProtein, color: .chartProtein)
-                macroSlider(label: "脂肪", ratio: $viewModel.macroRatioFat, color: .chartFat)
+            VStack(spacing: 12) {
+                macroDisplayRow(label: "碳水化合物", percent: Int(viewModel.macroRatioCarbs * 100), color: Color.chartCarbs)
+                macroDisplayRow(label: "蛋白质", percent: Int(viewModel.macroRatioProtein * 100), color: Color.chartProtein)
+                macroDisplayRow(label: "脂肪", percent: Int(viewModel.macroRatioFat * 100), color: Color.chartFat)
             }
             .padding(16)
             .background(Color.appCard)
@@ -213,20 +185,16 @@ struct SettingsView: View {
         }
     }
 
-    private func macroSlider(label: String, ratio: Binding<Double>, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(label)
-                    .font(.appCallout)
-                    .foregroundStyle(Color.appForeground)
-                Spacer()
-                Text(String(format: "%.0f%%", ratio.wrappedValue * 100))
-                    .font(.appCallout)
-                    .foregroundStyle(color)
-                    .fontWeight(.bold)
-            }
-            Slider(value: ratio, in: 0.05...0.65, step: 0.05)
-                .tint(color)
+    private func macroDisplayRow(label: String, percent: Int, color: Color) -> some View {
+        HStack {
+            Text(label)
+                .font(.appCallout)
+                .foregroundStyle(Color.appForeground)
+            Spacer()
+            Text("\(percent)%")
+                .font(.appCallout)
+                .fontWeight(.bold)
+                .foregroundStyle(color)
         }
     }
 
@@ -343,6 +311,143 @@ struct SettingsView: View {
             .padding(16)
             .background(Color.appCard)
             .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+    }
+}
+
+// MARK: - 个人信息编辑弹窗
+
+struct ProfileEditorView: View {
+    @Bindable var viewModel: SettingsViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("基本信息") {
+                    TextField("昵称", text: $viewModel.nickname)
+
+                    Picker("性别", selection: $viewModel.gender) {
+                        Text("男").tag("male")
+                        Text("女").tag("female")
+                        Text("其他").tag("other")
+                    }
+
+                    DatePicker("出生日期", selection: $viewModel.birthDate, displayedComponents: .date)
+
+                    HStack {
+                        Text("身高")
+                        Spacer()
+                        TextField("170", value: $viewModel.height, format: .number)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                        Text("cm")
+                    }
+
+                    HStack {
+                        Text("目标体重")
+                        Spacer()
+                        TextField("65", value: $viewModel.targetWeight, format: .number)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                        Text("kg")
+                    }
+                }
+
+                Section("运动设置") {
+                    Picker("活动水平", selection: $viewModel.activityLevel) {
+                        Text("久坐").tag("sedentary")
+                        Text("轻量活动").tag("light")
+                        Text("中等活动").tag("moderate")
+                        Text("重度活动").tag("heavy")
+                    }
+
+                    Picker("健身目标", selection: $viewModel.fitnessGoal) {
+                        Text("减脂").tag("lose")
+                        Text("增肌").tag("gain")
+                        Text("维持").tag("maintain")
+                        Text("塑形").tag("shape")
+                    }
+                }
+
+                Section("每日目标") {
+                    HStack {
+                        Text("卡路里")
+                        Spacer()
+                        TextField("2000", value: $viewModel.dailyCalorieGoal, format: .number)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                        Text("kcal")
+                    }
+
+                    HStack {
+                        Text("运动时长")
+                        Spacer()
+                        TextField("60", value: $viewModel.dailyExerciseGoal, format: .number)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                        Text("分钟")
+                    }
+
+                    HStack {
+                        Text("饮水量")
+                        Spacer()
+                        TextField("2000", value: $viewModel.dailyWaterGoal, format: .number)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                        Text("ml")
+                    }
+
+                    Button("重新计算推荐值") {
+                        viewModel.recalculateCalories()
+                    }
+                    .foregroundStyle(Color.appPrimary)
+                }
+
+                Section("宏量营养素比例") {
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text("碳水化合物")
+                            Spacer()
+                            Text("\(Int(viewModel.macroRatioCarbs * 100))%")
+                                .foregroundStyle(Color.chartCarbs)
+                        }
+                        Slider(value: $viewModel.macroRatioCarbs, in: 0.05...0.65, step: 0.05)
+                            .tint(Color.chartCarbs)
+                    }
+
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text("蛋白质")
+                            Spacer()
+                            Text("\(Int(viewModel.macroRatioProtein * 100))%")
+                                .foregroundStyle(Color.chartProtein)
+                        }
+                        Slider(value: $viewModel.macroRatioProtein, in: 0.05...0.65, step: 0.05)
+                            .tint(Color.chartProtein)
+                    }
+
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text("脂肪")
+                            Spacer()
+                            Text("\(Int(viewModel.macroRatioFat * 100))%")
+                                .foregroundStyle(Color.chartFat)
+                        }
+                        Slider(value: $viewModel.macroRatioFat, in: 0.05...0.65, step: 0.05)
+                            .tint(Color.chartFat)
+                    }
+                }
+            }
+            .navigationTitle("编辑个人信息")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("完成") {
+                        dismiss()
+                    }
+                }
+            }
         }
     }
 }
