@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = SettingsViewModel()
     @State private var isEditingProfile = false
+    @AppStorage("appearanceTheme") private var appearanceTheme = "system"
 
     var body: some View {
         NavigationStack {
@@ -43,6 +44,32 @@ struct SettingsView: View {
             .task {
                 viewModel.configure(context: modelContext)
             }
+            .onChange(of: viewModel.appearanceTheme) { _, newValue in
+                applyTheme(newValue)
+            }
+        }
+    }
+
+    // MARK: - 主题切换
+
+    private func applyTheme(_ theme: String) {
+        appearanceTheme = theme
+        switch theme {
+        case "light":
+            UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .flatMap { $0.windows }
+                .forEach { $0.overrideUserInterfaceStyle = .light }
+        case "dark":
+            UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .flatMap { $0.windows }
+                .forEach { $0.overrideUserInterfaceStyle = .dark }
+        default:
+            UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .flatMap { $0.windows }
+                .forEach { $0.overrideUserInterfaceStyle = .unspecified }
         }
     }
 
@@ -131,7 +158,7 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - 每日目标（只读展示 + 编辑按钮）
+    // MARK: - 每日目标
 
     private var goalsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -166,7 +193,7 @@ struct SettingsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    // MARK: - 宏量营养素（只读展示）
+    // MARK: - 宏量营养素
 
     private var macroSection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -208,29 +235,37 @@ struct SettingsView: View {
 
             VStack(spacing: 0) {
                 Toggle(isOn: $viewModel.weightReminderEnabled) {
-                    Label("称重提醒", systemImage: "scalemass.fill")
+                    Text("称重提醒")
+                        .foregroundStyle(Color.appForeground)
                 }
+                .tint(Color.appPrimary)
                 .padding(.vertical, 8)
 
                 Divider()
 
                 Toggle(isOn: $viewModel.exerciseReminderEnabled) {
-                    Label("运动提醒", systemImage: "figure.run")
+                    Text("运动提醒")
+                        .foregroundStyle(Color.appForeground)
                 }
+                .tint(Color.appPrimary)
                 .padding(.vertical, 8)
 
                 Divider()
 
                 Toggle(isOn: $viewModel.waterReminderEnabled) {
-                    Label("喝水提醒", systemImage: "drop.fill")
+                    Text("喝水提醒")
+                        .foregroundStyle(Color.appForeground)
                 }
+                .tint(Color.appPrimary)
                 .padding(.vertical, 8)
 
                 Divider()
 
                 Toggle(isOn: $viewModel.weeklyReportEnabled) {
-                    Label("周报推送", systemImage: "chart.bar.fill")
+                    Text("周报推送")
+                        .foregroundStyle(Color.appForeground)
                 }
+                .tint(Color.appPrimary)
                 .padding(.vertical, 8)
             }
             .padding(16)
@@ -239,17 +274,18 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - 单位
+    // MARK: - 单位与主题
 
     private var unitsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("单位设置")
+            Text("单位与主题")
                 .font(.appTitle3)
                 .foregroundStyle(Color.appForeground)
 
             VStack(spacing: 12) {
                 HStack {
                     Text("体重单位")
+                        .foregroundStyle(Color.appForeground)
                     Spacer()
                     Picker("", selection: $viewModel.unitWeight) {
                         Text("kg").tag("kg")
@@ -263,14 +299,15 @@ struct SettingsView: View {
 
                 HStack {
                     Text("外观主题")
+                        .foregroundStyle(Color.appForeground)
                     Spacer()
                     Picker("", selection: $viewModel.appearanceTheme) {
-                        Text("跟随系统").tag("system")
+                        Text("自动").tag("system")
                         Text("浅色").tag("light")
                         Text("深色").tag("dark")
                     }
                     .pickerStyle(.segmented)
-                    .frame(width: 200)
+                    .frame(width: 180)
                 }
             }
             .padding(16)
@@ -291,6 +328,7 @@ struct SettingsView: View {
                 HStack {
                     Text("FitSelf")
                         .font(.appTitle3)
+                        .foregroundStyle(Color.appForeground)
                     Spacer()
                     Text("v1.0.0")
                         .font(.appCallout)
