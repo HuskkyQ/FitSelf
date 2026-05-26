@@ -16,13 +16,21 @@ struct WeightDataPoint: Identifiable {
     let weight: Double
 }
 
+struct ExerciseDataPoint: Identifiable {
+    let id = UUID()
+    let date: Date
+    let duration: Int
+    let calories: Double
+}
+
 @Observable
 final class TrendsViewModel {
     var selectedTab: TrendsTab = .weight
 
     var weightData: [WeightDataPoint] = []
     var calorieData: [NutritionDailyPoint] = []
-    var exerciseMinutesData: [(date: Date, minutes: Int)] = []
+    var exerciseData: [ExerciseDataPoint] = []
+    var nutritionData: [NutritionDailyPoint] = []
 
     var timeRange: TrendsTimeRange = .week
 
@@ -42,6 +50,7 @@ final class TrendsViewModel {
     func loadData() async {
         await loadWeightData()
         await loadCalorieData()
+        await loadExerciseData()
     }
 
     private func loadWeightData() async {
@@ -64,8 +73,71 @@ final class TrendsViewModel {
     }
 
     private func loadCalorieData() async {
-        guard let _ = nutritionRepo else { return }
-        // TODO: 加载每日卡路里趋势
+        guard let nutritionRepo = nutritionRepo else { return }
+        let endDate = Date()
+        let calendar = Calendar.current
+        let days = timeRange == .year ? 30 : timeRange.value
+
+        var points: [NutritionDailyPoint] = []
+        for i in (0..<days).reversed() {
+            guard let date = calendar.date(byAdding: .day, value: -i, to: endDate) else { continue }
+            do {
+                let summary = try nutritionRepo.dailyNutritionSummary(for: date)
+                points.append(NutritionDailyPoint(
+                    date: calendar.startOfDay(for: date),
+                    calories: summary.calories,
+                    protein: summary.protein,
+                    fat: summary.fat,
+                    carbs: summary.carbs
+                ))
+            } catch {
+                points.append(NutritionDailyPoint(
+                    date: calendar.startOfDay(for: date),
+                    calories: 0, protein: 0, fat: 0, carbs: 0
+                ))
+            }
+        }
+
+        await MainActor.run {
+            self.calorieData = points
+            self.nutritionData = points
+            let consumed = points.filter { $0.calories > 0 }
+            if consumed.count >= 2 {
+                let avg = consumed.reduce(0.0) { $0 + $1.calories } / Double(consumed.count)
+                self.calorieTrend = String(format: "日均 %.0f kcal", avg)
+            }
+        }
+    }
+
+    private func loadExerciseData() async {
+        guard let workoutRepo = workoutRepo else { return }
+        let endDate = Date()
+        let calendar = Calendar.current
+        let days = timeRange == .year ? 30 : timeRange.value
+
+        var points: [ExerciseDataPoint] = []
+        for i in (0..<days).reversed() {
+            guard let date = calendar.date(byAdding: .day, value: -i, to: endDate) else { continue }
+            do {
+                let duration = try workoutRepo.totalExerciseDuration(in: date)
+                let workouts = try workoutRepo.workouts(for: date)
+                let calories = workouts.reduce(0.0) { $0 + $1.caloriesBurned }
+                points.append(ExerciseDataPoint(
+                    date: calendar.startOfDay(for: date),
+                    duration: duration,
+                    calories: calories
+                ))
+            } catch {
+                points.append(ExerciseDataPoint(
+                    date: calendar.startOfDay(for: date),
+                    duration: 0, calories: 0
+                ))
+            }
+        }
+
+        await MainActor.run {
+            self.exerciseData = points
+        }
     }
 }
 

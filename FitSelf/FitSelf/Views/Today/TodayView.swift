@@ -4,6 +4,10 @@ struct TodayView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = TodayViewModel()
     var onSettingsTap: (() -> Void)? = nil
+    var onWorkoutTap: (() -> Void)? = nil
+    var onNutritionTap: (() -> Void)? = nil
+    @State private var showingWeightSheet = false
+    @State private var weightInput: Double = 0
 
     var body: some View {
         NavigationStack {
@@ -60,6 +64,9 @@ struct TodayView: View {
                     }
                 }
             }
+            .sheet(isPresented: $showingWeightSheet) {
+                weightInputSheet
+            }
         }
         .task {
             viewModel.configure(context: modelContext)
@@ -83,9 +90,50 @@ struct TodayView: View {
 
     private var quickActions: some View {
         HStack(spacing: 12) {
-            QuickActionButton(icon: "figure.run", title: "记录运动", color: Color.chartExercise) {}
-            QuickActionButton(icon: "fork.knife", title: "记录饮食", color: Color.chartCalories) {}
-            QuickActionButton(icon: "scalemass", title: "称体重", color: Color.chartWater) {}
+            QuickActionButton(icon: "figure.run", title: "记录运动", color: Color.chartExercise) {
+                onWorkoutTap?()
+            }
+            QuickActionButton(icon: "fork.knife", title: "记录饮食", color: Color.chartCalories) {
+                onNutritionTap?()
+            }
+            QuickActionButton(icon: "scalemass", title: "称体重", color: Color.chartWater) {
+                showingWeightSheet = true
+            }
+        }
+    }
+
+    private var weightInputSheet: some View {
+        NavigationStack {
+            Form {
+                Section("记录体重") {
+                    HStack {
+                        Text("体重")
+                        TextField("0", value: $weightInput, format: .number)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                        Text("kg")
+                    }
+                }
+            }
+            .navigationTitle("记录体重")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("取消") { showingWeightSheet = false }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("保存") {
+                        if weightInput > 0 {
+                            let repo = BodyMeasurementRepository(modelContext: modelContext)
+                            _ = repo.addMeasurement(weight: weightInput)
+                            try? modelContext.save()
+                        }
+                        showingWeightSheet = false
+                        weightInput = 0
+                    }
+                    .fontWeight(.bold)
+                }
+            }
         }
     }
 }

@@ -1,6 +1,13 @@
 import SwiftData
 import Foundation
 
+struct EditSetDetail: Identifiable {
+    let id = UUID()
+    var weight: Double
+    var reps: Int
+    var rpe: Int?
+}
+
 @Observable
 final class WorkoutViewModel {
     var activeWorkout: Workout?
@@ -38,10 +45,24 @@ final class WorkoutViewModel {
         workoutCategory = category
     }
 
-    func addExercise(name: String, category: String = "strength") {
+    func addExercise(name: String, category: String = "strength", defaultSets: Int = 3, defaultReps: Int = 10) {
         guard let workout = activeWorkout, let repo = workoutRepo else { return }
         let exercise = repo.addExercise(to: workout, name: name, category: category)
+        for _ in 1...defaultSets {
+            _ = repo.addSet(to: exercise, weight: 0, reps: defaultReps, rpe: nil)
+        }
         exercises.append(exercise)
+    }
+
+    func updateExerciseSets(exerciseIndex: Int, sets: [EditSetDetail]) {
+        guard exerciseIndex < exercises.count, let repo = workoutRepo else { return }
+        let exercise = exercises[exerciseIndex]
+        for existingSet in exercise.sets {
+            repo.deleteSet(existingSet)
+        }
+        for detail in sets {
+            _ = repo.addSet(to: exercise, weight: detail.weight, reps: detail.reps, rpe: detail.rpe)
+        }
     }
 
     func addSet(to exerciseIndex: Int, weight: Double = 0, reps: Int = 0, rpe: Int? = nil) {

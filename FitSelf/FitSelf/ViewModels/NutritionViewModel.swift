@@ -21,6 +21,11 @@ final class NutritionViewModel {
     var dinnerEntries: [FoodEntry] = []
     var snackEntries: [FoodEntry] = []
 
+    var dailyWaterMl: Int = 0
+    var waterGoal: Int = 2000
+    var waterEntries: [WaterEntry] = []
+    var waterProgress: Double { waterGoal > 0 ? Double(dailyWaterMl) / Double(waterGoal) : 0 }
+
     var calorieProgress: Double { calorieGoal > 0 ? dailyCalories / Double(calorieGoal) : 0 }
     var proteinProgress: Double { proteinGoal > 0 ? dailyProtein / proteinGoal : 0 }
     var fatProgress: Double { fatGoal > 0 ? dailyFat / fatGoal : 0 }
@@ -29,15 +34,17 @@ final class NutritionViewModel {
     var remainingCalories: Int { max(0, calorieGoal - Int(dailyCalories)) }
 
     private var nutritionRepo: NutritionRepository?
+    private var waterRepo: WaterRepository?
     private var profileRepo: UserProfileRepository?
 
     func configure(context: ModelContext) {
         nutritionRepo = NutritionRepository(modelContext: context)
+        waterRepo = WaterRepository(modelContext: context)
         profileRepo = UserProfileRepository(modelContext: context)
     }
 
     func loadData() async {
-        guard let nutritionRepo, let profileRepo else { return }
+        guard let nutritionRepo, let profileRepo, let waterRepo else { return }
 
         let today = Date()
         let profile: UserProfile
@@ -62,6 +69,8 @@ final class NutritionViewModel {
                 self.proteinGoal = Double(profile.dailyCalorieGoal) * profile.macroRatioProtein / 4.0
                 self.fatGoal = Double(profile.dailyCalorieGoal) * profile.macroRatioFat / 9.0
                 self.carbsGoal = Double(profile.dailyCalorieGoal) * profile.macroRatioCarbs / 4.0
+
+                self.waterGoal = profile.dailyWaterGoal
             }
         } catch {
             // 保持默认值
@@ -77,6 +86,17 @@ final class NutritionViewModel {
             }
         } catch {
             // 空列表
+        }
+
+        do {
+            let waterList = try waterRepo.waterEntries(for: today)
+            let total = waterList.reduce(0) { $0 + $1.milliliters }
+            await MainActor.run {
+                self.waterEntries = waterList
+                self.dailyWaterMl = total
+            }
+        } catch {
+            // 空数据
         }
     }
 
@@ -105,6 +125,20 @@ final class NutritionViewModel {
         removeEntry(entry, from: entry.meal)
         repo.delete(entry)
         recalculateTotals()
+    }
+
+    func addWater(ml: Int) {
+        guard let repo = waterRepo else { return }
+        let entry = repo.addWater(milliliters: ml)
+        waterEntries.append(entry)
+        dailyWaterMl += ml
+    }
+
+    func deleteWater(_ entry: WaterEntry) {
+        guard let repo = waterRepo else { return }
+        dailyWaterMl -= entry.milliliters
+        waterEntries.removeAll { $0.id == entry.id }
+        try? repo.deleteEntry(entry)
     }
 
     private func appendEntry(_ entry: FoodEntry, to meal: String) {

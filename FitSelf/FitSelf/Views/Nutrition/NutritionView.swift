@@ -18,6 +18,8 @@ struct NutritionView: View {
                     mealSection(title: "午餐", icon: "sun.max.fill", entries: viewModel.lunchEntries, mealKey: "lunch")
                     mealSection(title: "晚餐", icon: "sunset.fill", entries: viewModel.dinnerEntries, mealKey: "dinner")
                     mealSection(title: "加餐", icon: "cup.and.saucer.fill", entries: viewModel.snackEntries, mealKey: "snack")
+
+                    waterSection
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
@@ -162,6 +164,84 @@ struct NutritionView: View {
         .background(Color.appCard)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
+
+    private var waterSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Image(systemName: "drop.fill")
+                    .foregroundStyle(Color.chartWater)
+                Text("饮水记录")
+                    .font(.appTitle3)
+                    .foregroundStyle(Color.appForeground)
+
+                Spacer()
+
+                Text("\(viewModel.dailyWaterMl) / \(viewModel.waterGoal) ml")
+                    .font(.appCallout)
+                    .foregroundStyle(Color.appMutedForeground)
+            }
+
+            ProgressView(value: viewModel.waterProgress)
+                .tint(Color.chartWater)
+                .scaleEffect(y: 2)
+                .padding(.vertical, 4)
+
+            HStack(spacing: 12) {
+                waterQuickAddButton(title: "一杯", subtitle: "200ml", amount: 200)
+                waterQuickAddButton(title: "中杯", subtitle: "350ml", amount: 350)
+                waterQuickAddButton(title: "大杯", subtitle: "500ml", amount: 500)
+            }
+
+            if !viewModel.waterEntries.isEmpty {
+                ForEach(viewModel.waterEntries) { entry in
+                    HStack {
+                        Image(systemName: "drop.fill")
+                            .font(.appCaption)
+                            .foregroundStyle(Color.chartWater)
+                        Text("\(entry.milliliters) ml")
+                            .font(.appCallout)
+                            .foregroundStyle(Color.appForeground)
+
+                        Spacer()
+
+                        Text(entry.recordedAt.formatted(date: .omitted, time: .shortened))
+                            .font(.appCaption)
+                            .foregroundStyle(Color.appMutedForeground)
+                    }
+                    .padding(.vertical, 4)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            viewModel.deleteWater(entry)
+                        } label: {
+                            Label("删除", systemImage: "trash")
+                        }
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .background(Color.appCard)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func waterQuickAddButton(title: String, subtitle: String, amount: Int) -> some View {
+        Button {
+            viewModel.addWater(ml: amount)
+        } label: {
+            VStack(spacing: 4) {
+                Text(title)
+                    .font(.appCaption)
+                    .foregroundStyle(Color.appForeground)
+                Text(subtitle)
+                    .font(.appCaption2)
+                    .foregroundStyle(Color.appMutedForeground)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(Color.chartWater.opacity(0.1))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+    }
 }
 
 struct FoodEntryRow: View {
@@ -220,10 +300,10 @@ struct AddFoodView: View {
 
                 portionInput
 
-                if searchResults.isEmpty && searchText.isEmpty {
-                    commonFoodsList
-                } else {
+                if !searchText.isEmpty {
                     searchResultsList
+                } else {
+                    commonFoodsList
                 }
             }
             .navigationTitle("添加食物")
@@ -273,10 +353,41 @@ struct AddFoodView: View {
 
     private var commonFoodsList: some View {
         List {
-            Section("常见食物") {
-                // 将在 FoodDatabaseSeeder 实现后显示
-                Text("暂无食物数据")
-                    .foregroundStyle(Color.appMutedForeground)
+            let categories = Dictionary(grouping: FoodDatabaseSeeder.commonFoods) { $0.category }
+            let sortedCategories = categories.keys.sorted()
+
+            ForEach(sortedCategories, id: \.self) { category in
+                Section(category) {
+                    ForEach(categories[category]!, id: \.name) { item in
+                        Button {
+                            let name = item.name
+                            let descriptor = FetchDescriptor<Food>(
+                                predicate: #Predicate<Food> { $0.name == name }
+                            )
+                            if let food = try? modelContext.fetch(descriptor).first {
+                                viewModel.addEntry(food: food, portionGrams: portionGrams, meal: selectedMeal)
+                            }
+                            dismiss()
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(item.name)
+                                        .font(.appCallout)
+                                        .foregroundStyle(Color.appForeground)
+                                }
+                                Spacer()
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text(String(format: "%.0f kcal", item.caloriesPer100g * portionGrams / 100))
+                                        .font(.appCallout)
+                                        .foregroundStyle(Color.chartCalories)
+                                    Text("每100g")
+                                        .font(.appCaption2)
+                                        .foregroundStyle(Color.appMutedForeground)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

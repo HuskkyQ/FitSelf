@@ -13,7 +13,11 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            TodayView(onSettingsTap: { selectedTab = .settings })
+            TodayView(
+                onSettingsTap: { selectedTab = .settings },
+                onWorkoutTap: { selectedTab = .workout },
+                onNutritionTap: { selectedTab = .nutrition }
+            )
                 .tabItem {
                     Label("今日", systemImage: "house.fill")
                 }

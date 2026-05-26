@@ -8,6 +8,9 @@ struct WorkoutView: View {
     @State private var showingCustomExercise = false
     @State private var showingWorkoutHistory = false
     @State private var expandedExerciseIds: Set<PersistentIdentifier> = []
+    @State private var editingExerciseIndex: Int?
+    @State private var editingExerciseSets: [EditSetDetail] = []
+    @State private var exerciseToAdd: WorkoutType?
 
     var body: some View {
         NavigationStack {
@@ -32,9 +35,7 @@ struct WorkoutView: View {
                         Button("完成") {
                             do {
                                 try viewModel.finishWorkout()
-                            } catch {
-                                // TODO: 错误处理
-                            }
+                            } catch {}
                         }
                         .foregroundStyle(Color.appAccent)
                         .fontWeight(.bold)
@@ -51,7 +52,26 @@ struct WorkoutView: View {
                 }
             }
             .sheet(isPresented: $showingExercisePicker) {
-                ExercisePickerView(viewModel: viewModel, category: viewModel.workoutCategory)
+                ExercisePickerView(
+                    viewModel: viewModel,
+                    category: viewModel.workoutCategory,
+                    onSelect: { type in
+                        exerciseToAdd = type
+                    }
+                )
+            }
+            .sheet(item: $exerciseToAdd) { type in
+                AddExerciseSetsView(
+                    exerciseName: type.name,
+                    category: type.category,
+                    onAdd: { sets, reps in
+                        viewModel.addExercise(name: type.name, category: type.category, defaultSets: sets, defaultReps: reps)
+                        exerciseToAdd = nil
+                    },
+                    onCancel: {
+                        exerciseToAdd = nil
+                    }
+                )
             }
             .sheet(isPresented: $showingCustomExercise) {
                 CustomExerciseView(viewModel: viewModel, category: viewModel.workoutCategory)
@@ -59,6 +79,22 @@ struct WorkoutView: View {
             .sheet(isPresented: $showingWorkoutHistory) {
                 NavigationStack {
                     WorkoutHistoryView(viewModel: viewModel)
+                }
+            }
+            .sheet(item: Binding(
+                get: { editingExerciseIndex.map { IndexWrapper(index: $0) } },
+                set: { editingExerciseIndex = $0?.index }
+            )) { wrapper in
+                if wrapper.index < viewModel.exercises.count {
+                    EditExerciseSetsView(
+                        exerciseName: viewModel.exercises[wrapper.index].exerciseName,
+                        currentSets: editingExerciseSets,
+                        onSave: { sets in
+                            viewModel.updateExerciseSets(exerciseIndex: wrapper.index, sets: sets)
+                            editingExerciseIndex = nil
+                        },
+                        onCancel: { editingExerciseIndex = nil }
+                    )
                 }
             }
             .task {
@@ -136,6 +172,11 @@ struct WorkoutView: View {
         ScrollView {
             VStack(spacing: 16) {
                 workoutTimerSection
+                    .scrollTransition { content, phase in
+                        content
+                            .scaleEffect(phase.isIdentity ? 1 : 0.95)
+                            .opacity(phase.isIdentity ? 1 : 0.7)
+                    }
 
                 exerciseListSection
 
@@ -147,9 +188,8 @@ struct WorkoutView: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
-            .padding(.bottom, 100)
         }
-        .overlay(alignment: .bottom) {
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             workoutBottomBar
         }
     }
@@ -198,13 +238,23 @@ struct WorkoutView: View {
     private var exerciseListSection: some View {
         VStack(spacing: 12) {
             ForEach(Array(viewModel.exercises.enumerated()), id: \.element.id) { index, exercise in
-                ExerciseRowView(
+                ExerciseCardView(
                     exercise: exercise,
                     isExpanded: expandedExerciseIds.contains(exercise.id),
-                    onToggle: { toggleExercise(exercise.id) },
-                    onAddSet: { addSet(for: index) },
-                    onUpdateSet: { setIndex, weight, reps, rpe in
-                        viewModel.updateSet(exerciseIndex: index, setIndex: setIndex, weight: weight, reps: reps, rpe: rpe)
+                    onToggle: {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                            toggleExercise(exercise.id)
+                        }
+                    },
+                    onEdit: {
+                        let exercise = viewModel.exercises[index]
+                        editingExerciseSets = exercise.sets.sorted(by: { $0.setNumber < $1.setNumber }).map {
+                            EditSetDetail(weight: $0.weight, reps: $0.reps, rpe: $0.rpe)
+                        }
+                        if editingExerciseSets.isEmpty {
+                            editingExerciseSets = [EditSetDetail(weight: 0, reps: 0, rpe: nil)]
+                        }
+                        editingExerciseIndex = index
                     }
                 )
             }
@@ -284,9 +334,7 @@ struct WorkoutView: View {
             Button("完成训练") {
                 do {
                     try viewModel.finishWorkout()
-                } catch {
-                    // TODO: 错误处理
-                }
+                } catch {}
             }
             .fontWeight(.bold)
             .foregroundStyle(.white)
@@ -307,26 +355,15 @@ struct WorkoutView: View {
             expandedExerciseIds.insert(id)
         }
     }
-
-    private func addSet(for index: Int) {
-        viewModel.addSet(to: index)
-    }
 }
 
-struct ExerciseRowView: View {
+// MARK: - 动作卡片（只读展示 + 编辑按钮）
+
+struct ExerciseCardView: View {
     let exercise: WorkoutExercise
     let isExpanded: Bool
     let onToggle: () -> Void
-    let onAddSet: () -> Void
-    let onUpdateSet: (Int, Double, Int, Int?) -> Void
-
-    @State private var setInputs: [SetInput] = []
-
-    struct SetInput {
-        var weight: String = ""
-        var reps: String = ""
-        var rpe: Int? = nil
-    }
+    let onEdit: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -354,115 +391,239 @@ struct ExerciseRowView: View {
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .foregroundStyle(Color.appMutedForeground)
                         .font(.caption)
+                        .rotationEffect(.degrees(0))
                 }
                 .padding(12)
             }
 
             if isExpanded {
-                Divider().padding(.horizontal, 12)
+                VStack(spacing: 0) {
+                    Divider().padding(.horizontal, 12)
 
-                setsInputTable
-
-                Button {
-                    onAddSet()
-                } label: {
                     HStack {
-                        Image(systemName: "plus")
-                        Text("添加一组")
+                        Text("组数详情")
+                            .font(.appCaption)
+                            .foregroundStyle(Color.appMutedForeground)
+                        Spacer()
+                        Button {
+                            onEdit()
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "pencil")
+                                    .font(.appCaption2)
+                                Text("编辑")
+                                    .font(.appCaption)
+                            }
+                            .foregroundStyle(Color.appPrimary)
+                        }
                     }
-                    .font(.appFootnote)
-                    .foregroundStyle(Color.appPrimary)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+
+                    setsDisplayList
+
+                    Button {
+                        onEdit()
+                    } label: {
+                        HStack {
+                            Image(systemName: "plus")
+                            Text("添加/修改组数")
+                        }
+                        .font(.appFootnote)
+                        .foregroundStyle(Color.appPrimary)
+                        .padding(.vertical, 8)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
                 }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 8)
             }
         }
         .background(Color.appCard)
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .onChange(of: exercise.sets.count) { _, _ in
-            syncSetInputs()
-        }
-        .onAppear {
-            syncSetInputs()
-        }
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: isExpanded)
     }
 
     private var sortedSets: [WorkoutSet] {
         exercise.sets.sorted { $0.setNumber < $1.setNumber }
     }
 
-    private func syncSetInputs() {
-        let sets = sortedSets
-        let newInputs = sets.map { set -> SetInput in
-            if set.isCompleted {
-                return SetInput(weight: String(format: "%.1f", set.weight), reps: "\(set.reps)", rpe: set.rpe)
-            } else {
-                return SetInput(weight: "", reps: "", rpe: nil)
-            }
-        }
-        setInputs = newInputs
-    }
-
-    private var setsInputTable: some View {
-        VStack(spacing: 0) {
+    private var setsDisplayList: some View {
+        VStack(spacing: 6) {
             HStack(spacing: 0) {
-                Text("#").frame(width: 28)
-                Text("重量").frame(width: 60)
-                Text("次数").frame(width: 50)
-                Text("RPE").frame(width: 50)
-                Spacer().frame(width: 28)
+                Text("#")
+                    .frame(width: 28)
+                Text("重量")
+                    .frame(width: 70)
+                Text("次数")
+                    .frame(width: 50)
+                Text("RPE")
+                    .frame(width: 40)
+                Spacer()
+                    .frame(width: 28)
             }
             .font(.appCaption2)
             .foregroundStyle(Color.appMutedForeground)
-            .padding(.vertical, 6)
 
-            ForEach(Array(sortedSets.enumerated()), id: \.element.id) { index, set in
+            ForEach(sortedSets) { set in
                 HStack(spacing: 0) {
                     Text("\(set.setNumber)")
                         .frame(width: 28)
-                        .font(.appCaption)
                         .foregroundStyle(Color.appMutedForeground)
 
-                    TextField("0", text: Binding(
-                        get: { index < setInputs.count ? setInputs[index].weight : "" },
-                        set: { if index < setInputs.count { setInputs[index].weight = $0 } }
-                    ))
-                    .keyboardType(.decimalPad)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 60)
-                    .font(.appCaption)
+                    Text(set.isCompleted ? String(format: "%.1f kg", set.weight) : "—")
+                        .frame(width: 70)
+                        .foregroundStyle(set.isCompleted ? Color.appForeground : Color.appMutedForeground)
 
-                    TextField("0", text: Binding(
-                        get: { index < setInputs.count ? setInputs[index].reps : "" },
-                        set: { if index < setInputs.count { setInputs[index].reps = $0 } }
-                    ))
-                    .keyboardType(.numberPad)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 50)
-                    .font(.appCaption)
+                    Text(set.isCompleted ? "\(set.reps)" : "—")
+                        .frame(width: 50)
+                        .foregroundStyle(set.isCompleted ? Color.appForeground : Color.appMutedForeground)
 
-                    TextField("0", text: Binding(
-                        get: { if index < setInputs.count, let rpe = setInputs[index].rpe { "\(rpe)" } else { "" } },
-                        set: { if index < setInputs.count { setInputs[index].rpe = Int($0) } }
-                    ))
-                    .keyboardType(.numberPad)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 50)
-                    .font(.appCaption)
+                    if let rpe = set.rpe, set.isCompleted {
+                        Text("\(rpe)")
+                            .frame(width: 40)
+                            .foregroundStyle(Color.appPrimary)
+                    } else {
+                        Text("—")
+                            .frame(width: 40)
+                            .foregroundStyle(Color.appMutedForeground)
+                    }
 
-                    Spacer().frame(width: 28)
+                    Spacer()
+                        .frame(width: 28)
                 }
-                .padding(.vertical, 4)
+                .font(.appCaption)
             }
         }
         .padding(.horizontal, 12)
+        .padding(.vertical, 6)
     }
 }
+
+// MARK: - 添加动作时设置组数和次数
+
+struct AddExerciseSetsView: View {
+    let exerciseName: String
+    let category: String
+    let onAdd: (Int, Int) -> Void
+    let onCancel: () -> Void
+
+    @State private var sets = 3
+    @State private var reps = 10
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("动作") {
+                    Text(exerciseName)
+                        .font(.appCallout)
+                        .foregroundStyle(Color.appForeground)
+                }
+
+                Section("初始设置") {
+                    Stepper("组数: \(sets)", value: $sets, in: 1...20)
+
+                    Stepper("次数: \(reps)", value: $reps, in: 1...100)
+
+                    HStack {
+                        Text("预览")
+                            .foregroundStyle(Color.appMutedForeground)
+                        Spacer()
+                        Text("\(sets) 组 × \(reps) 次")
+                            .foregroundStyle(Color.appForeground)
+                    }
+                }
+            }
+            .navigationTitle("添加动作")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("取消") { onCancel() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("添加") { onAdd(sets, reps) }
+                        .fontWeight(.bold)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - 编辑动作组数
+
+struct EditExerciseSetsView: View {
+    let exerciseName: String
+    let currentSets: [EditSetDetail]
+    let onSave: ([EditSetDetail]) -> Void
+    let onCancel: () -> Void
+
+    @State private var sets: [EditSetDetail] = []
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(exerciseName) {
+                    ForEach($sets) { $set in
+                        HStack {
+                            Text("第\(sets.firstIndex(where: { $0.id == set.id })! + 1)组")
+                                .frame(width: 50)
+                                .foregroundStyle(Color.appMutedForeground)
+
+                            TextField("重量", value: $set.weight, format: .number)
+                                .keyboardType(.decimalPad)
+                                .textFieldStyle(.roundedBorder)
+
+                            Text("kg")
+                                .foregroundStyle(Color.appMutedForeground)
+
+                            TextField("次数", value: $set.reps, format: .number)
+                                .keyboardType(.numberPad)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                    }
+                    .onDelete { indexSet in
+                        sets.remove(atOffsets: indexSet)
+                    }
+
+                    Button("添加一组") {
+                        sets.append(EditSetDetail(weight: 0, reps: 0, rpe: nil))
+                    }
+                    .foregroundStyle(Color.appPrimary)
+                }
+            }
+            .navigationTitle("编辑组数")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("取消") { onCancel() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("保存") {
+                        onSave(sets.map { EditSetDetail(weight: $0.weight, reps: $0.reps, rpe: $0.rpe) })
+                    }
+                    .fontWeight(.bold)
+                }
+            }
+        }
+        .onAppear {
+            sets = currentSets
+        }
+    }
+}
+
+// MARK: - IndexWrapper for sheet binding
+
+class IndexWrapper: Identifiable {
+    let id = UUID()
+    let index: Int
+    init(index: Int) { self.index = index }
+}
+
+// MARK: - ExercisePickerView
 
 struct ExercisePickerView: View {
     let viewModel: WorkoutViewModel
     let category: String
+    let onSelect: (WorkoutType) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
 
@@ -474,7 +635,7 @@ struct ExercisePickerView: View {
 
                 ForEach(filtered) { type in
                     Button {
-                        viewModel.addExercise(name: type.name, category: type.category)
+                        onSelect(type)
                         dismiss()
                     } label: {
                         HStack {
@@ -525,12 +686,19 @@ struct CustomExerciseView: View {
     let category: String
     @Environment(\.dismiss) private var dismiss
     @State private var exerciseName = ""
+    @State private var sets = 3
+    @State private var reps = 10
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("自定义动作") {
                     TextField("动作名称", text: $exerciseName)
+                }
+
+                Section("初始设置") {
+                    Stepper("组数: \(sets)", value: $sets, in: 1...20)
+                    Stepper("次数: \(reps)", value: $reps, in: 1...100)
                 }
             }
             .navigationTitle("添加自定义动作")
@@ -539,7 +707,7 @@ struct CustomExerciseView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("添加") {
                         guard !exerciseName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-                        viewModel.addExercise(name: exerciseName.trimmingCharacters(in: .whitespaces), category: category)
+                        viewModel.addExercise(name: exerciseName.trimmingCharacters(in: .whitespaces), category: category, defaultSets: sets, defaultReps: reps)
                         dismiss()
                     }
                     .disabled(exerciseName.trimmingCharacters(in: .whitespaces).isEmpty)

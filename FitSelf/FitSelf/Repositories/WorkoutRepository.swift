@@ -60,4 +60,8 @@ final class WorkoutRepository {
     func delete(_ workout: Workout) {
         modelContext.delete(workout)
     }
+
+    func deleteSet(_ set: WorkoutSet) {
+        modelContext.delete(set)
+    }
 }
