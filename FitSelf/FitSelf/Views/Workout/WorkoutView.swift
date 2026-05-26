@@ -65,8 +65,8 @@ struct WorkoutView: View {
                 AddExerciseSetsView(
                     exerciseName: type.name,
                     category: type.category,
-                    onAdd: { sets, reps in
-                        viewModel.addExercise(name: type.name, category: type.category, defaultSets: sets, defaultReps: reps)
+                    onAdd: { sets, reps, weight in
+                        viewModel.addExercise(name: type.name, category: type.category, defaultSets: sets, defaultReps: reps, defaultWeight: weight)
                         exerciseToAdd = nil
                     },
                     onCancel: {
@@ -375,7 +375,7 @@ struct WorkoutView: View {
             .foregroundStyle(Color.appDestructive)
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(Color.appCard)
+            .background(Color.appDestructive.opacity(0.15))
             .clipShape(RoundedRectangle(cornerRadius: 12))
 
             Button("完成训练") {
@@ -392,7 +392,6 @@ struct WorkoutView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(.ultraThinMaterial)
     }
 
     private func toggleExercise(_ id: PersistentIdentifier) {
@@ -472,13 +471,10 @@ struct ExerciseCardView: View {
                     Button {
                         onEdit()
                     } label: {
-                        HStack {
-                            Image(systemName: "plus")
-                            Text("添加/修改组数")
-                        }
-                        .font(.appFootnote)
-                        .foregroundStyle(Color.appPrimary)
-                        .padding(.vertical, 8)
+                        Text("编辑组数")
+                            .font(.appFootnote)
+                            .foregroundStyle(Color.appPrimary)
+                            .padding(.vertical, 8)
                     }
                     .padding(.horizontal, 12)
                     .padding(.bottom, 8)
@@ -551,11 +547,12 @@ struct ExerciseCardView: View {
 struct AddExerciseSetsView: View {
     let exerciseName: String
     let category: String
-    let onAdd: (Int, Int) -> Void
+    let onAdd: (Int, Int, Double) -> Void
     let onCancel: () -> Void
 
     @State private var sets = 3
     @State private var reps = 10
+    @State private var weight: Double = 0
 
     var body: some View {
         NavigationStack {
@@ -569,13 +566,22 @@ struct AddExerciseSetsView: View {
                 Section("初始设置") {
                     Stepper("组数: \(sets)", value: $sets, in: 1...20)
 
+                    HStack {
+                        Text("重量")
+                        TextField("0", value: $weight, format: .number)
+                            .keyboardType(.decimalPad)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 80)
+                        Text("kg")
+                    }
+
                     Stepper("次数: \(reps)", value: $reps, in: 1...100)
 
                     HStack {
                         Text("预览")
                             .foregroundStyle(Color.appMutedForeground)
                         Spacer()
-                        Text("\(sets) 组 × \(reps) 次")
+                        Text("\(sets)组 × \(String(format: "%.1f", weight))kg × \(reps)次")
                             .foregroundStyle(Color.appForeground)
                     }
                 }
@@ -587,7 +593,7 @@ struct AddExerciseSetsView: View {
                     Button("取消") { onCancel() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("添加") { onAdd(sets, reps) }
+                    Button("添加") { onAdd(sets, reps, weight) }
                         .fontWeight(.bold)
                 }
             }
@@ -618,6 +624,7 @@ struct EditExerciseSetsView: View {
                             TextField("重量", value: $set.weight, format: .number)
                                 .keyboardType(.decimalPad)
                                 .textFieldStyle(.roundedBorder)
+                                .frame(width: 70)
 
                             Text("kg")
                                 .foregroundStyle(Color.appMutedForeground)
@@ -625,14 +632,17 @@ struct EditExerciseSetsView: View {
                             TextField("次数", value: $set.reps, format: .number)
                                 .keyboardType(.numberPad)
                                 .textFieldStyle(.roundedBorder)
+                                .frame(width: 55)
                         }
                     }
                     .onDelete { indexSet in
                         sets.remove(atOffsets: indexSet)
                     }
 
-                    Button("添加一组") {
+                    Button {
                         sets.append(EditSetDetail(weight: 0, reps: 0, rpe: nil))
+                    } label: {
+                        Label("添加一组", systemImage: "plus.circle.fill")
                     }
                     .foregroundStyle(Color.appPrimary)
                 }
@@ -735,6 +745,7 @@ struct CustomExerciseView: View {
     @State private var exerciseName = ""
     @State private var sets = 3
     @State private var reps = 10
+    @State private var weight: Double = 0
 
     var body: some View {
         NavigationStack {
@@ -745,6 +756,14 @@ struct CustomExerciseView: View {
 
                 Section("初始设置") {
                     Stepper("组数: \(sets)", value: $sets, in: 1...20)
+
+                    HStack {
+                        Text("重量")
+                        TextField("0", value: $weight, format: .number)
+                            .keyboardType(.decimalPad)
+                        Text("kg")
+                    }
+
                     Stepper("次数: \(reps)", value: $reps, in: 1...100)
                 }
             }
@@ -754,7 +773,7 @@ struct CustomExerciseView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("添加") {
                         guard !exerciseName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-                        viewModel.addExercise(name: exerciseName.trimmingCharacters(in: .whitespaces), category: category, defaultSets: sets, defaultReps: reps)
+                        viewModel.addExercise(name: exerciseName.trimmingCharacters(in: .whitespaces), category: category, defaultSets: sets, defaultReps: reps, defaultWeight: weight)
                         dismiss()
                     }
                     .disabled(exerciseName.trimmingCharacters(in: .whitespaces).isEmpty)

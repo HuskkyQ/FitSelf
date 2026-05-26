@@ -45,11 +45,11 @@ final class WorkoutViewModel {
         workoutCategory = category
     }
 
-    func addExercise(name: String, category: String = "strength", defaultSets: Int = 3, defaultReps: Int = 10) {
+    func addExercise(name: String, category: String = "strength", defaultSets: Int = 3, defaultReps: Int = 10, defaultWeight: Double = 0) {
         guard let workout = activeWorkout, let repo = workoutRepo else { return }
         let exercise = repo.addExercise(to: workout, name: name, category: category)
         for _ in 1...defaultSets {
-            _ = repo.addSet(to: exercise, weight: 0, reps: defaultReps, rpe: nil)
+            _ = repo.addSet(to: exercise, weight: defaultWeight, reps: defaultReps, rpe: nil)
         }
         exercises.append(exercise)
     }
