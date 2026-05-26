@@ -31,12 +31,12 @@ final class SettingsViewModel {
 
     private var profileRepo: UserProfileRepository?
 
-    func configure(context: ModelContext) {
+    func configure(context: ModelContext, appearanceTheme: String = "system") {
         profileRepo = UserProfileRepository(modelContext: context)
-        loadProfile()
+        loadProfile(appearanceTheme: appearanceTheme)
     }
 
-    func loadProfile() {
+    func loadProfile(appearanceTheme: String = "system") {
         guard let repo = profileRepo else { return }
         do {
             let p = try repo.ensureProfile()
@@ -56,7 +56,7 @@ final class SettingsViewModel {
             macroRatioFat = p.macroRatioFat
             unitWeight = p.unitWeight
             unitHeight = p.unitHeight
-            appearanceTheme = p.appearanceTheme
+            self.appearanceTheme = appearanceTheme
             weightReminderEnabled = p.weightReminderEnabled
             exerciseReminderEnabled = p.exerciseReminderEnabled
             waterReminderEnabled = p.waterReminderEnabled

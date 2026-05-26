@@ -42,10 +42,7 @@ struct SettingsView: View {
                 }
             }
             .task {
-                viewModel.configure(context: modelContext)
-            }
-            .onChange(of: viewModel.appearanceTheme) { _, newValue in
-                appearanceTheme = newValue
+                viewModel.configure(context: modelContext, appearanceTheme: appearanceTheme)
             }
         }
     }
@@ -278,7 +275,7 @@ struct SettingsView: View {
                     Text("外观主题")
                         .foregroundStyle(Color.appForeground)
                     Spacer()
-                    Picker("", selection: $viewModel.appearanceTheme) {
+                    Picker("", selection: $appearanceTheme) {
                         Text("自动").tag("system")
                         Text("浅色").tag("light")
                         Text("深色").tag("dark")
