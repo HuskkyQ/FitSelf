@@ -1,0 +1,180 @@
+{
+  "categories": [
+    {
+      "key": "intensity",
+      "name": "强度评估类",
+      "entries": [
+        { "abbr": "RPE", "full": "Rate of Perceived Exertion", "zh": "主观用力程度分级" },
+        { "abbr": "RIR", "full": "Reps In Reserve", "zh": "剩余次数" },
+        { "abbr": "MET", "full": "Metabolic Equivalent", "zh": "代谢当量" },
+        { "abbr": "HR", "full": "Heart Rate", "zh": "心率" },
+        { "abbr": "HRmax", "full": "Maximum Heart Rate", "zh": "最大心率" },
+        { "abbr": "BPM", "full": "Beats Per Minute", "zh": "每分钟心跳数" }
+      ]
+    },
+    {
+      "key": "sets_reps_tempo",
+      "name": "组次与动作节奏",
+      "entries": [
+        { "abbr": "Rep", "full": "Repetition", "zh": "单次动作/次数", "alias": "R" },
+        { "abbr": "Set", "full": "Set", "zh": "组", "alias": "S" },
+        { "abbr": "RM", "full": "Repetition Maximum", "zh": "最大重复次数" },
+        { "abbr": "Rst", "full": "Rest", "zh": "组间休息" },
+        { "abbr": "TUT", "full": "Time Under Tension", "zh": "肌肉受力时长/动作节奏" },
+        { "abbr": "ECC", "full": "Eccentric", "zh": "离心阶段" },
+        { "abbr": "CON", "full": "Concentric", "zh": "向心阶段" }
+      ]
+    },
+    {
+      "key": "training_modes",
+      "name": "训练模式",
+      "entries": [
+        { "abbr": "AMRAP", "full": "As Many Rounds/Reps As Possible", "zh": "限时尽力做多（次数/组数）" },
+        { "abbr": "EMOM", "full": "Every Minute On the Minute", "zh": "每分钟定时训练" },
+        { "abbr": "HIIT", "full": "High-Intensity Interval Training", "zh": "高强度间歇训练" },
+        { "abbr": "LISS", "full": "Low-Intensity Steady State", "zh": "低强度稳态有氧" },
+        { "abbr": "MICT", "full": "Moderate-Intensity Continuous Training", "zh": "中等强度持续有氧" },
+        { "abbr": "Superset", "full": "Superset", "zh": "超级组" },
+        { "abbr": "DropSet", "full": "Drop Set", "zh": "递减组", "alias": "Drop Set" },
+        { "abbr": "GI", "full": "Giant Set", "zh": "巨人组" },
+        { "abbr": "PPL", "full": "Push/Pull/Legs", "zh": "推拉腿（训练分化）" },
+        { "abbr": "FBW", "full": "Full Body Workout", "zh": "全身训练" }
+      ]
+    },
+    {
+      "key": "muscle_groups",
+      "name": "身体肌群",
+      "entries": [
+        { "abbr": "CH", "full": "Chest", "zh": "胸部" },
+        { "abbr": "BK", "full": "Back", "zh": "背部" },
+        { "abbr": "LG", "full": "Legs", "zh": "腿部" },
+        { "abbr": "SH", "full": "Shoulder", "zh": "肩部" },
+        { "abbr": "Tri", "full": "Triceps", "zh": "肱三头肌" },
+        { "abbr": "Bi", "full": "Biceps", "zh": "肱二头肌" },
+        { "abbr": "Abs", "full": "Abdominals", "zh": "腹部" },
+        { "abbr": "Glu", "full": "Glutes", "zh": "臀部", "alias": "Glutes" },
+        { "abbr": "Quads", "full": "Quadriceps", "zh": "股四头肌（大腿前侧）" },
+        { "abbr": "Ham", "full": "Hamstrings", "zh": "腘绳肌（大腿后侧）" }
+      ]
+    },
+    {
+      "key": "goals_metrics",
+      "name": "训练目标与体态指标",
+      "entries": [
+        { "abbr": "Hypert", "full": "Hypertrophy", "zh": "肌肥大/增肌" },
+        { "abbr": "Str", "full": "Strength", "zh": "绝对力量" },
+        { "abbr": "End", "full": "Endurance", "zh": "耐力" },
+        { "abbr": "Bulk", "full": "Bulking", "zh": "增肌期" },
+        { "abbr": "Cut", "full": "Cutting", "zh": "减脂期" },
+        { "abbr": "BF", "full": "Body Fat Percentage", "zh": "体脂率", "alias": "BFP" },
+        { "abbr": "BW", "full": "Body Weight", "zh": "体重/自重" },
+        { "abbr": "ROM", "full": "Range of Motion", "zh": "关节活动幅度/动作行程" }
+      ]
+    },
+    {
+      "key": "equipment_exercises",
+      "name": "器械与经典动作",
+      "entries": [
+        { "abbr": "DB", "full": "Dumbbell", "zh": "哑铃" },
+        { "abbr": "BB", "full": "Barbell", "zh": "杠铃" },
+        { "abbr": "KB", "full": "Kettlebell", "zh": "壶铃" },
+        { "abbr": "BP", "full": "Bench Press", "zh": "卧推" },
+        { "abbr": "SQ", "full": "Squat", "zh": "深蹲" },
+        { "abbr": "DL", "full": "Deadlift", "zh": "硬拉" },
+        { "abbr": "PU", "full": "Pull-up", "zh": "引体向上" }
+      ]
+    },
+    {
+      "key": "nutrition_body",
+      "name": "营养与身体基础指标",
+      "entries": [
+        { "abbr": "BMI", "full": "Body Mass Index", "zh": "身体质量指数" },
+        { "abbr": "BMR", "full": "Basal Metabolic Rate", "zh": "基础代谢率" },
+        { "abbr": "TDEE", "full": "Total Daily Energy Expenditure", "zh": "每日总热量消耗" },
+        { "abbr": "CHO", "full": "Carbohydrate", "zh": "碳水化合物" },
+        { "abbr": "PRO", "full": "Protein", "zh": "蛋白质" },
+        { "abbr": "FAT", "full": "Fat", "zh": "脂肪" },
+        { "abbr": "Cal", "full": "Kilocalorie", "zh": "千卡/大卡（热量单位）", "alias": "Kcal" }
+      ]
+    },
+    {
+      "key": "other_terms",
+      "name": "其他常用术语",
+      "entries": [
+        { "abbr": "PR", "full": "Personal Record", "zh": "个人最佳成绩" },
+        { "abbr": "PB", "full": "Personal Best", "zh": "个人最好成绩（同PR）" },
+        { "abbr": "DOMS", "full": "Delayed Onset Muscle Soreness", "zh": "延迟性肌肉酸痛" },
+        { "abbr": "WOD", "full": "Workout Of the Day", "zh": "当日训练内容" },
+        { "abbr": "Mob", "full": "Mobility", "zh": "关节活动度训练" }
+      ]
+    }
+  ],
+  "index": {
+    "RPE": "intensity",
+    "RIR": "intensity",
+    "MET": "intensity",
+    "HR": "intensity",
+    "HRmax": "intensity",
+    "BPM": "intensity",
+    "Rep": "sets_reps_tempo",
+    "R": "sets_reps_tempo",
+    "Set": "sets_reps_tempo",
+    "S": "sets_reps_tempo",
+    "RM": "sets_reps_tempo",
+    "Rst": "sets_reps_tempo",
+    "TUT": "sets_reps_tempo",
+    "ECC": "sets_reps_tempo",
+    "CON": "sets_reps_tempo",
+    "AMRAP": "training_modes",
+    "EMOM": "training_modes",
+    "HIIT": "training_modes",
+    "LISS": "training_modes",
+    "MICT": "training_modes",
+    "Superset": "training_modes",
+    "DropSet": "training_modes",
+    "Drop Set": "training_modes",
+    "GI": "training_modes",
+    "PPL": "training_modes",
+    "FBW": "training_modes",
+    "CH": "muscle_groups",
+    "BK": "muscle_groups",
+    "LG": "muscle_groups",
+    "SH": "muscle_groups",
+    "Tri": "muscle_groups",
+    "Bi": "muscle_groups",
+    "Abs": "muscle_groups",
+    "Glu": "muscle_groups",
+    "Glutes": "muscle_groups",
+    "Quads": "muscle_groups",
+    "Ham": "muscle_groups",
+    "Hypert": "goals_metrics",
+    "Str": "goals_metrics",
+    "End": "goals_metrics",
+    "Bulk": "goals_metrics",
+    "Cut": "goals_metrics",
+    "BF": "goals_metrics",
+    "BFP": "goals_metrics",
+    "BW": "goals_metrics",
+    "ROM": "goals_metrics",
+    "DB": "equipment_exercises",
+    "BB": "equipment_exercises",
+    "KB": "equipment_exercises",
+    "BP": "equipment_exercises",
+    "SQ": "equipment_exercises",
+    "DL": "equipment_exercises",
+    "PU": "equipment_exercises",
+    "BMI": "nutrition_body",
+    "BMR": "nutrition_body",
+    "TDEE": "nutrition_body",
+    "CHO": "nutrition_body",
+    "PRO": "nutrition_body",
+    "FAT": "nutrition_body",
+    "Cal": "nutrition_body",
+    "Kcal": "nutrition_body",
+    "PR": "other_terms",
+    "PB": "other_terms",
+    "DOMS": "other_terms",
+    "WOD": "other_terms",
+    "Mob": "other_terms"
+  }
+}

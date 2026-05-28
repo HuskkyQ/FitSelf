@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 struct WorkoutType: Identifiable, Hashable {
     let id = UUID()
@@ -9,6 +10,18 @@ struct WorkoutType: Identifiable, Hashable {
 
     func caloriesPerMinute(weightKg: Double) -> Double {
         metValue * 3.5 * weightKg / 200.0
+    }
+
+    var fallbackIcon: String {
+        switch category {
+        case "strength": return "dumbbell.fill"
+        case "cardio": return "figure.run"
+        case "flexibility": return "figure.yoga"
+        case "sports": return "figure.basketball"
+        case "water": return "figure.pool.swim"
+        case "outdoor": return "figure.hiking"
+        default: return "figure.run"
+        }
     }
 }
 
@@ -24,26 +37,26 @@ enum WorkoutTypeStore {
     ]
 
     static let types: [WorkoutType] = [
-        // 力量训练
+        // 力量训练 - 按动作模式区分图标
         WorkoutType(name: "杠铃深蹲", category: "strength", metValue: 6.0, icon: "figure.strengthtraining.traditional"),
-        WorkoutType(name: "杠铃卧推", category: "strength", metValue: 6.0, icon: "figure.strengthtraining.traditional"),
+        WorkoutType(name: "杠铃卧推", category: "strength", metValue: 6.0, icon: "dumbbell.fill"),
         WorkoutType(name: "杠铃硬拉", category: "strength", metValue: 6.0, icon: "figure.strengthtraining.traditional"),
-        WorkoutType(name: "杠铃划船", category: "strength", metValue: 5.0, icon: "figure.strengthtraining.traditional"),
-        WorkoutType(name: "杠铃推举", category: "strength", metValue: 5.0, icon: "figure.strengthtraining.traditional"),
-        WorkoutType(name: "引体向上", category: "strength", metValue: 8.0, icon: "figure.strengthtraining.functional"),
+        WorkoutType(name: "杠铃划船", category: "strength", metValue: 5.0, icon: "figure.rowing"),
+        WorkoutType(name: "杠铃推举", category: "strength", metValue: 5.0, icon: "dumbbell.fill"),
+        WorkoutType(name: "引体向上", category: "strength", metValue: 8.0, icon: "figure.climbing"),
         WorkoutType(name: "俯卧撑", category: "strength", metValue: 8.0, icon: "figure.strengthtraining.functional"),
-        WorkoutType(name: "哑铃弯举", category: "strength", metValue: 4.0, icon: "figure.strengthtraining.traditional"),
-        WorkoutType(name: "哑铃飞鸟", category: "strength", metValue: 4.0, icon: "figure.strengthtraining.traditional"),
-        WorkoutType(name: "哑铃侧平举", category: "strength", metValue: 4.0, icon: "figure.strengthtraining.traditional"),
+        WorkoutType(name: "哑铃弯举", category: "strength", metValue: 4.0, icon: "dumbbell"),
+        WorkoutType(name: "哑铃飞鸟", category: "strength", metValue: 4.0, icon: "dumbbell"),
+        WorkoutType(name: "哑铃侧平举", category: "strength", metValue: 4.0, icon: "dumbbell"),
         WorkoutType(name: "腿举", category: "strength", metValue: 5.0, icon: "figure.strengthtraining.traditional"),
         WorkoutType(name: "腿弯举", category: "strength", metValue: 4.5, icon: "figure.strengthtraining.traditional"),
-        WorkoutType(name: "小腿提踵", category: "strength", metValue: 4.0, icon: "figure.strengthtraining.traditional"),
+        WorkoutType(name: "小腿提踵", category: "strength", metValue: 4.0, icon: "figure.walk"),
         WorkoutType(name: "腹肌卷腹", category: "strength", metValue: 5.0, icon: "figure.strengthtraining.functional"),
         WorkoutType(name: "平板支撑", category: "strength", metValue: 4.0, icon: "figure.strengthtraining.functional"),
         WorkoutType(name: "臀桥", category: "strength", metValue: 4.0, icon: "figure.strengthtraining.functional"),
-        WorkoutType(name: "哑铃深蹲", category: "strength", metValue: 5.5, icon: "figure.strengthtraining.traditional"),
+        WorkoutType(name: "哑铃深蹲", category: "strength", metValue: 5.5, icon: "dumbbell"),
         WorkoutType(name: "拉力器夹胸", category: "strength", metValue: 4.5, icon: "figure.strengthtraining.traditional"),
-        WorkoutType(name: "坐姿划船", category: "strength", metValue: 5.0, icon: "figure.strengthtraining.traditional"),
+        WorkoutType(name: "坐姿划船", category: "strength", metValue: 5.0, icon: "figure.rowing"),
         WorkoutType(name: "三头下压", category: "strength", metValue: 4.0, icon: "figure.strengthtraining.traditional"),
 
         // 有氧运动
@@ -86,7 +99,7 @@ enum WorkoutTypeStore {
         WorkoutType(name: "登山", category: "outdoor", metValue: 6.5, icon: "figure.hiking"),
         WorkoutType(name: "徒步", category: "outdoor", metValue: 5.3, icon: "figure.hiking"),
         WorkoutType(name: "攀岩", category: "outdoor", metValue: 8.0, icon: "figure.climbing"),
-        WorkoutType(name: "滑雪", category: "outdoor", metValue: 7.0, icon: "figure.snowboarding"),
+        WorkoutType(name: "滑雪", category: "outdoor", metValue: 7.0, icon: "figure.skiing.downhill"),
         WorkoutType(name: "滑板", category: "outdoor", metValue: 5.0, icon: "figure.skating"),
     ]
 

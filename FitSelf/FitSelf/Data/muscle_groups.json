@@ -1,0 +1,340 @@
+{
+  "meta": {
+    "title": "健身全身肌群完整详解",
+    "description": "包含全称、英文缩写、位置、核心功能、专属训练动作的标准肌群划分",
+    "target": "健身新手系统学习、训练计划搭配、肌群查漏补缺"
+  },
+  "ppl_classification": {
+    "push": {
+      "name": "推肌群",
+      "muscles": ["胸", "三角肌前束", "三角肌中束", "肱三头肌"]
+    },
+    "pull": {
+      "name": "拉肌群",
+      "muscles": ["背阔肌", "斜方肌", "菱形肌", "三角肌后束", "肱二头肌", "前臂"]
+    },
+    "legs": {
+      "name": "腿肌群",
+      "muscles": ["股四头肌", "腘绳肌", "臀部", "小腿", "髋部肌群"]
+    }
+  },
+  "weak_point_muscles": {
+    "name": "新手必记薄弱肌群",
+    "description": "日常难主动发力，最易体态变差、训练失衡",
+    "items": ["三角肌后束", "中下斜方肌", "腘绳肌", "臀中肌", "腹横肌", "肩袖稳定肌群"]
+  },
+  "muscle_groups": [
+    {
+      "ppl": "push",
+      "section": "上肢推肌群",
+      "name": "胸部肌群",
+      "nameZh": "胸部",
+      "nameEn": "Chest",
+      "abbr": "CH",
+      "icon": "dumbbell.fill",
+      "location": "锁骨下方、胸前整片区域",
+      "functions": ["手臂前推", "水平内收", "夹紧胸肌"],
+      "subdivisions": [
+        { "name": "上胸", "actions": ["上斜卧推", "上斜飞鸟"] },
+        { "name": "中胸", "actions": ["平板杠铃卧推", "平板哑铃飞鸟"] },
+        { "name": "下胸", "actions": ["下斜卧推", "双杠臂屈伸"] },
+        { "name": "胸外侧", "actions": [] },
+        { "name": "胸内侧", "actions": [] }
+      ],
+      "primaryActions": ["平板杠铃卧推", "上斜卧推", "下斜卧推", "平板哑铃飞鸟", "上斜飞鸟", "双杠臂屈伸"]
+    },
+    {
+      "ppl": "push",
+      "section": "上肢推肌群",
+      "name": "三角肌",
+      "nameZh": "肩膀",
+      "nameEn": "Shoulder",
+      "abbr": "SH",
+      "icon": "figure.strengthtraining.functional",
+      "description": "分为三束，必须分开训练，体态和肩宽全靠它",
+      "location": "肩关节周围",
+      "subdivisions": [
+        {
+          "name": "三角肌前束",
+          "location": "肩前侧",
+          "functions": ["手臂前举", "推类动作辅助"],
+          "actions": ["站姿推举", "前平举", "卧推附带刺激"]
+        },
+        {
+          "name": "三角肌中束",
+          "location": "肩外侧",
+          "functions": ["手臂侧平举", "外展"],
+          "note": "决定肩宽",
+          "actions": ["哑铃侧平举", "绳索侧拉"]
+        },
+        {
+          "name": "三角肌后束",
+          "location": "肩后侧",
+          "functions": ["手臂后展", "肩胛骨稳定"],
+          "note": "最薄弱，圆肩元凶",
+          "actions": ["俯身飞鸟", "面拉", "反向飞鸟"],
+          "weakPoint": true
+        }
+      ],
+      "primaryActions": ["站姿推举", "前平举", "哑铃侧平举", "绳索侧拉", "俯身飞鸟", "面拉", "反向飞鸟"]
+    },
+    {
+      "ppl": "push",
+      "section": "上肢推肌群",
+      "name": "肱三头肌",
+      "nameEn": "Triceps",
+      "abbr": "Tri",
+      "icon": "figure.strengthtraining.traditional",
+      "location": "上臂后侧",
+      "note": "手臂最粗的肌肉",
+      "subdivisions": [
+        { "name": "长头", "functions": ["三头主要发力", "肩伸辅助"], "actions": ["窄距卧推", "绳索下压过头顶"] },
+        { "name": "外侧头", "functions": ["肘伸"], "actions": ["绳索下压", "仰卧臂屈伸"] },
+        { "name": "内侧头", "functions": ["肘伸"], "actions": ["反握下压", "窄距推"] }
+      ],
+      "functions": ["手臂伸直", "肘关节伸展"],
+      "primaryActions": ["绳索下压", "窄距卧推", "臂屈伸", "双杠臂屈伸"]
+    },
+    {
+      "ppl": "pull",
+      "section": "上肢拉肌群",
+      "name": "背阔肌",
+      "nameEn": "Latissimus Dorsi",
+      "abbr": "BK",
+      "icon": "figure.climbing",
+      "parentGroup": "背部肌群",
+      "location": "背部两侧，腋下下方",
+      "functions": ["手臂下拉", "后收", "打造倒三角身材"],
+      "primaryActions": ["引体向上", "高位下拉", "单臂哑铃划船"]
+    },
+    {
+      "ppl": "pull",
+      "section": "上肢拉肌群",
+      "name": "斜方肌",
+      "nameEn": "Trapezius",
+      "abbr": "BK",
+      "icon": "figure.climbing",
+      "parentGroup": "背部肌群",
+      "subdivisions": [
+        {
+          "name": "上斜方",
+          "location": "颈肩连接处",
+          "functions": ["提肩"],
+          "actions": ["杠铃耸肩", "提拉"]
+        },
+        {
+          "name": "中下斜方",
+          "location": "上背中部",
+          "functions": ["收肩胛骨"],
+          "actions": ["坐姿划船", "俯身划船"],
+          "weakPoint": true
+        }
+      ],
+      "primaryActions": ["杠铃耸肩", "提拉", "坐姿划船", "俯身划船"]
+    },
+    {
+      "ppl": "pull",
+      "section": "上肢拉肌群",
+      "name": "菱形肌与肩袖肌群",
+      "nameEn": "Rhomboids & Rotator Cuff",
+      "abbr": "BK",
+      "icon": "figure.strengthtraining.functional",
+      "parentGroup": "背部肌群",
+      "location": "肩胛骨深层",
+      "functions": ["稳定肩膀", "改善圆肩驼背"],
+      "primaryActions": ["面拉", "YTWL", "反向飞鸟"],
+      "weakPoint": true
+    },
+    {
+      "ppl": "pull",
+      "section": "上肢拉肌群",
+      "name": "竖脊肌",
+      "nameEn": "Erector Spinae",
+      "abbr": "BK",
+      "icon": "figure.strengthtraining.traditional",
+      "parentGroup": "背部肌群",
+      "note": "下背",
+      "location": "脊柱两侧长条肌肉",
+      "functions": ["稳定腰椎", "躯干伸直"],
+      "primaryActions": ["硬拉", "山羊挺身", "俯卧背伸"]
+    },
+    {
+      "ppl": "pull",
+      "section": "上肢拉肌群",
+      "name": "肱二头肌",
+      "nameEn": "Biceps",
+      "abbr": "Bi",
+      "icon": "dumbbell",
+      "location": "上臂前侧",
+      "subdivisions": [
+        { "name": "长头", "functions": ["屈肘", "手臂外旋"], "actions": ["杠铃弯举", "上斜哑铃弯举"] },
+        { "name": "短头", "functions": ["屈肘", "手臂内旋"], "actions": ["牧师凳弯举", "锤式弯举"] }
+      ],
+      "functions": ["屈肘", "手臂旋转"],
+      "primaryActions": ["杠铃弯举", "哑铃弯举", "牧师凳弯举", "锤式弯举"]
+    },
+    {
+      "ppl": "pull",
+      "section": "上肢拉肌群",
+      "name": "前臂肌群",
+      "nameEn": "Forearm",
+      "icon": "figure.strengthtraining.functional",
+      "location": "小臂整体",
+      "functions": ["握力", "手腕屈伸"],
+      "primaryActions": ["腕弯举", "悬垂握力", "农夫行走"]
+    },
+    {
+      "ppl": "legs",
+      "section": "下肢肌群",
+      "name": "股四头肌",
+      "nameEn": "Quadriceps",
+      "abbr": "Quads",
+      "icon": "figure.strengthtraining.traditional",
+      "location": "大腿前侧",
+      "note": "人体最大肌群",
+      "subdivisions": [
+        { "name": "股直肌", "functions": ["伸膝", "屈髋"], "actions": ["腿屈伸", "深蹲"] },
+        { "name": "股外侧", "functions": ["伸膝"], "actions": ["深蹲", "腿举"] },
+        { "name": "股内侧", "functions": ["伸膝"], "actions": ["相扑深蹲", "腿屈伸"] },
+        { "name": "股中间", "functions": ["伸膝"], "actions": ["深蹲", "腿举"] }
+      ],
+      "functions": ["伸膝", "站立", "蹬地发力"],
+      "primaryActions": ["深蹲", "腿举", "箭步蹲", "腿屈伸"]
+    },
+    {
+      "ppl": "legs",
+      "section": "下肢肌群",
+      "name": "腘绳肌",
+      "nameEn": "Hamstrings",
+      "abbr": "Ham",
+      "icon": "figure.strengthtraining.traditional",
+      "location": "大腿后侧",
+      "functions": ["屈膝", "伸髋", "稳定膝盖"],
+      "primaryActions": ["罗马尼亚硬拉", "俯卧腿弯举", "臀推"],
+      "weakPoint": true
+    },
+    {
+      "ppl": "legs",
+      "section": "下肢肌群",
+      "name": "臀部肌群",
+      "nameEn": "Glutes",
+      "abbr": "Glu",
+      "icon": "figure.strengthtraining.functional",
+      "subdivisions": [
+        {
+          "name": "臀大肌",
+          "functions": ["伸髋"],
+          "weakPoint": false
+        },
+        {
+          "name": "臀中肌",
+          "functions": ["外展髋", "稳定下肢", "改善假胯宽"],
+          "weakPoint": true
+        },
+        {
+          "name": "臀小肌",
+          "functions": [],
+          "weakPoint": false
+        }
+      ],
+      "functions": ["伸髋", "外展髋", "稳定下肢", "改善假胯宽"],
+      "primaryActions": ["臀推", "臀桥", "相扑深蹲", "髋外展"]
+    },
+    {
+      "ppl": "legs",
+      "section": "下肢肌群",
+      "name": "小腿肌群",
+      "nameEn": "Calf",
+      "icon": "figure.walk",
+      "subdivisions": [
+        {
+          "name": "腓肠肌",
+          "location": "小腿表层",
+          "functions": ["踮脚", "行走", "跳跃发力"],
+          "actions": ["站姿提踵"]
+        },
+        {
+          "name": "比目鱼肌",
+          "location": "小腿深层",
+          "functions": ["踮脚", "行走", "跳跃发力"],
+          "actions": ["屈膝坐姿提踵"]
+        }
+      ],
+      "functions": ["踮脚", "行走", "跳跃发力"],
+      "primaryActions": ["站姿提踵", "坐姿提踵"]
+    },
+    {
+      "ppl": "core",
+      "section": "核心肌群",
+      "name": "腹直肌",
+      "nameEn": "Rectus Abdominis",
+      "abbr": "Abs",
+      "icon": "figure.strengthtraining.functional",
+      "parentGroup": "腹部肌群",
+      "location": "腹部正中",
+      "note": "八块腹肌",
+      "functions": ["躯干前屈"],
+      "primaryActions": ["卷腹", "仰卧举腿"]
+    },
+    {
+      "ppl": "core",
+      "section": "核心肌群",
+      "name": "腹斜肌",
+      "nameEn": "Obliques",
+      "abbr": "Abs",
+      "icon": "figure.strengthtraining.functional",
+      "parentGroup": "腹部肌群",
+      "location": "腰侧左右",
+      "functions": ["身体扭转"],
+      "primaryActions": ["俄罗斯转体", "侧卷腹"]
+    },
+    {
+      "ppl": "core",
+      "section": "核心肌群",
+      "name": "腹横肌",
+      "nameEn": "Transverse Abdominis",
+      "abbr": "Abs",
+      "icon": "figure.strengthtraining.functional",
+      "parentGroup": "腹部肌群",
+      "location": "腹部最深层",
+      "note": "人体天然护腰带",
+      "functions": ["收紧核心"],
+      "primaryActions": ["平板支撑", "真空腹"],
+      "weakPoint": true
+    },
+    {
+      "ppl": "core",
+      "section": "核心肌群",
+      "name": "髂腰肌/髋屈肌",
+      "nameEn": "Iliopsoas/Hip Flexors",
+      "icon": "figure.walk",
+      "parentGroup": "深层核心肌群",
+      "location": "腰腹大腿连接处",
+      "functions": ["抬腿"],
+      "primaryActions": ["悬垂举腿", "仰卧举腿", "山地跑"]
+    },
+    {
+      "ppl": "core",
+      "section": "核心肌群",
+      "name": "内收肌群",
+      "nameEn": "Adductors",
+      "icon": "figure.strengthtraining.functional",
+      "parentGroup": "深层核心肌群",
+      "location": "大腿内侧",
+      "functions": ["稳定下肢", "内收大腿"],
+      "primaryActions": ["相扑深蹲", "内收肌器械", "侧弓步"]
+    }
+  ],
+  "abbreviation_lookup": {
+    "CH": { "en": "Chest", "zh": "胸部" },
+    "BK": { "en": "Back", "zh": "背部" },
+    "SH": { "en": "Shoulder", "zh": "肩部" },
+    "Tri": { "en": "Triceps", "zh": "肱三头肌" },
+    "Bi": { "en": "Biceps", "zh": "肱二头肌" },
+    "Abs": { "en": "Abdominals", "zh": "腹部" },
+    "Glu": { "en": "Glutes", "zh": "臀部" },
+    "Quads": { "en": "Quadriceps", "zh": "股四头肌" },
+    "Ham": { "en": "Hamstrings", "zh": "腘绳肌" },
+    "LG": { "en": "Legs", "zh": "腿部" }
+  }
+}

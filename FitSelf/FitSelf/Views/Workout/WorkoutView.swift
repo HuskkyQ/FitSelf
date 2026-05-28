@@ -7,6 +7,7 @@ struct WorkoutView: View {
     @State private var showingExercisePicker = false
     @State private var showingCustomExercise = false
     @State private var showingWorkoutHistory = false
+    @State private var showingMuscleHandbook = false
     @State private var editingExerciseIndex: Int?
     @State private var editingExerciseSets: [EditSetDetail] = []
     @State private var exerciseToAdd: WorkoutType?
@@ -42,11 +43,20 @@ struct WorkoutView: View {
                     }
                 } else {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            showingWorkoutHistory = true
-                        } label: {
-                            Image(systemName: "clock.arrow.circlepath")
-                                .foregroundStyle(Color.appMutedForeground)
+                        HStack(spacing: 16) {
+                            Button {
+                                showingMuscleHandbook = true
+                            } label: {
+                                Image(systemName: "book.fill")
+                                    .foregroundStyle(Color.appPrimary)
+                            }
+
+                            Button {
+                                showingWorkoutHistory = true
+                            } label: {
+                                Image(systemName: "clock.arrow.circlepath")
+                                    .foregroundStyle(Color.appMutedForeground)
+                            }
                         }
                     }
                 }
@@ -75,6 +85,9 @@ struct WorkoutView: View {
             }
             .sheet(isPresented: $showingCustomExercise) {
                 CustomExerciseView(viewModel: viewModel, category: viewModel.workoutCategory)
+            }
+            .sheet(isPresented: $showingMuscleHandbook) {
+                MuscleHandbookView()
             }
             .sheet(isPresented: $showingWorkoutHistory) {
                 NavigationStack {
@@ -126,6 +139,40 @@ struct WorkoutView: View {
                     workoutCategoryButton(title: "有氧运动", icon: "figure.run", category: "cardio", color: Color.chartCalories)
                     workoutCategoryButton(title: "柔韧拉伸", icon: "figure.yoga", category: "flexibility", color: Color.chartProtein)
                     workoutCategoryButton(title: "球类运动", icon: "basketball.fill", category: "sports", color: Color.chartCarbs)
+                }
+                .padding(.horizontal, 16)
+
+                Button {
+                    showingMuscleHandbook = true
+                } label: {
+                    HStack(spacing: 12) {
+                        Circle()
+                            .fill(Color.appPrimary.opacity(0.12))
+                            .frame(width: 40, height: 40)
+                            .overlay(
+                                Image(systemName: "book.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(Color.appPrimary)
+                            )
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("肌群训练手册")
+                                .font(.appCallout)
+                                .foregroundStyle(Color.appForeground)
+                            Text("推/拉/腿 · 肌群与动作对照")
+                                .font(.appCaption)
+                                .foregroundStyle(Color.appMutedForeground)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.appCaption)
+                            .foregroundStyle(Color.appMutedForeground)
+                    }
+                    .padding(14)
+                    .background(Color.appCard)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
                 .padding(.horizontal, 16)
 
@@ -723,8 +770,7 @@ struct ExercisePickerView: View {
                         dismiss()
                     } label: {
                         HStack {
-                            Image(systemName: type.icon)
-                                .foregroundStyle(Color.appPrimary)
+                            WorkoutIconView(iconName: type.icon, fallback: type.fallbackIcon, size: 18, color: Color.appPrimary)
                                 .frame(width: 32)
 
                             Text(type.name)
@@ -882,8 +928,7 @@ struct RecentWorkoutRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: categoryIcons[workout.workoutCategory, default: "figure.run"])
-                .foregroundStyle(Color.chartExercise)
+            WorkoutIconView(iconName: categoryIcons[workout.workoutCategory, default: "figure.run"], fallback: "figure.run", size: 18, color: Color.chartExercise)
                 .frame(width: 32)
 
             VStack(alignment: .leading, spacing: 4) {
